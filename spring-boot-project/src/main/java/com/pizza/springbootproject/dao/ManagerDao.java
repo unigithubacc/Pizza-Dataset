@@ -13,7 +13,7 @@ public class ManagerDao {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public void displayBestSellingProductsFromDB() {
+    public void displayStoreIDsFromDB() {
         List<Map<String, Object>> result = this.jdbcTemplate
                 .queryForList("SELECT storeID FROM pizza.stores WHERE state_abbr = 'CA'");
         for (Map<String, Object> row : result) {

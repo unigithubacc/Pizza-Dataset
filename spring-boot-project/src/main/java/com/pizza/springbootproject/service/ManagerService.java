@@ -17,6 +17,6 @@ public class ManagerService {
     private ManagerDao managerDao;
 
     public void fetchManager() {
-        managerDao.displayBestSellingProductsFromDB();
+        managerDao.displayStoreIDsFromDB();
     }
 }
