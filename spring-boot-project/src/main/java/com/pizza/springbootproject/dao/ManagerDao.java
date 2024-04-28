@@ -25,4 +25,22 @@ public class ManagerDao {
         }
     }
 
+    public void displayTopSellingProducts() {
+        List<Map<String, Object>> result = this.jdbcTemplate
+                .queryForList("SELECT products.SKU, products.Name, SUM(orders.nItems) AS TotalSold " +
+                        "FROM pizza.products " +
+                        "INNER JOIN pizza.order_items ON products.SKU = order_items.SKU " +
+                        "INNER JOIN pizza.orders ON order_items.orderID = orders.orderID " +
+                        "GROUP BY products.SKU, products.Name " +
+                        "ORDER BY TotalSold DESC " +
+                        "LIMIT 5");
+        System.out.println("\nDie meistverkauften Produkte:");
+        for (Map<String, Object> row : result) {
+            Object sku = row.get("SKU");
+            Object name = row.get("Name");
+            Object totalSold = row.get("TotalSold");
+            System.out.println("SKU: " + sku + ", Name: " + name + ", TotalSold: " + totalSold);
+        }
+
+    }
 }

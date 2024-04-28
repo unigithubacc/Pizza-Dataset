@@ -18,5 +18,6 @@ public class ManagerService {
 
     public void fetchManager() {
         managerDao.displayStoreIDsFromDB();
+        managerDao.displayTopSellingProducts();
     }
 }
