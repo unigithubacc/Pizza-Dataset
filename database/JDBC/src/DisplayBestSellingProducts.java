@@ -14,8 +14,8 @@ public class DisplayBestSellingProducts {
              Statement stmt = conn.createStatement();) {
             String sql = "SELECT products.SKU, products.Name, SUM(orders.nItems) AS TotalSold "+
                          "FROM pizza.products "+
-                         "INNER JOIN pizza.orderitems ON products.SKU = orderitems.SKU "+
-                         "INNER JOIN pizza.orders ON orderitems.orderID = orders.orderID "+
+                         "INNER JOIN pizza.order_items ON products.SKU = order_items.SKU "+
+                         "INNER JOIN pizza.orders ON order_items.orderID = orders.orderID "+
                          "GROUP BY products.SKU, products.Name "+
                          "ORDER BY TotalSold DESC "+
                          "LIMIT 5 "; 
