@@ -9,10 +9,6 @@ import com.pizza.springbootproject.dao.ManagerDao;
 @Service
 public class ManagerService {
 
-    // Read the URL of the external API from properties file.
-    @Value("${ManagerService.url}")
-    String apiUrl;
-
     @Autowired
     private ManagerDao managerDao;
 
