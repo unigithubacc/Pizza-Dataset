@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Store ID List</title>
+</head>
+<body>
+    <h1>Store ID List</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Iteriere über die Store-IDs und zeige sie in der Tabelle an -->
+            <tr th:each="storeID : ${storeIDs}">
+                <td th:text="${storeID}"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

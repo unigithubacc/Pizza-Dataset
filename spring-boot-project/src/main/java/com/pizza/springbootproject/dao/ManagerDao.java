@@ -1,5 +1,6 @@
 package com.pizza.springbootproject.dao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,19 @@ public class ManagerDao {
                 System.out.println(columnName + ": " + value);
             }
         }
+    }
+
+    public List<String> getStoreIDsFromDB() {
+        List<String> storeIDs = new ArrayList<>();
+        List<Map<String, Object>> result = this.jdbcTemplate
+                .queryForList("SELECT storeID FROM pizza.stores WHERE state_abbr = 'CA'");
+        for (Map<String, Object> row : result) {
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                Object value = entry.getValue();
+                storeIDs.add(value.toString()); // Hinzufügen der Store-ID zur Liste
+            }
+        }
+        return storeIDs;
     }
 
     public void displayTopSellingProducts() {
