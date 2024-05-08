@@ -10,7 +10,8 @@ public class ApiController {
     
     @GetMapping
     public String getApiData() {
-        return "Hallo von der API!";
+
+        return "Hallo von der APIs!";
     }
 
 }
