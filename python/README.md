@@ -1,4 +1,4 @@
-Virtuales Environment erzeugen:
+Virtuales Environment nur einmalig erzeugen:
 python -m venv env
 
 zeigt aktuelles Verzeichnis:
@@ -7,7 +7,6 @@ pwd
 Zu env Verzeichnis wechseln mit:
 cd Pizza-Dataset
 cd Python
-cd env\Scripts\activate
 .\env\Scripts\activate
 
 requirements installieren:
