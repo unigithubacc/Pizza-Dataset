@@ -1,23 +1,20 @@
 import streamlit as st
-import requests
-import pandas as pd
+from page1 import main as page1_main
+from page2 import main as page2_main
 
-st.title("Dynamische Datenfilterung")
+# Dictionary, das die Seiten-Funktionen speichert
+PAGES = {
+    "Seite 1": page1_main,
+    "Seite 2": page2_main
+}
 
-filter_text = st.text_input("Filter", "")
+# Sidebar Navigation
+st.sidebar.title('Navigation')
+selection = st.sidebar.radio("Gehe zu", list(PAGES.keys()))
 
-@st.cache_data(ttl=60)
-def fetch_data(filter: str):
-    response = requests.get("http://localhost:8000/stores/", params={"filter": filter})
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return []
-
-data = fetch_data(filter_text)
-
-if data:
-    df = pd.DataFrame(data)
-    st.dataframe(df)
+# Aufrufen der entsprechenden Seite basierend auf der Auswahl
+if selection in PAGES:
+    page = PAGES[selection]
+    page()
 else:
-    st.write("Keine Daten gefunden.")
+    st.error("Ungültige Seiteauswahl. Bitte wähle eine gültige Option.")
