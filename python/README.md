@@ -13,7 +13,10 @@ requirements installieren:
 $ pip install -r requirements.txt
 
 
+Programmausführung
+1. backend starten:
+uvicorn main:app --reload
 
-//uvicorn main:app --reload
-//streamlit run stream_lit.py
-//uvicorn main:app --reload                                                         
+2. frontend starten:
+streamlit run app.py
+
