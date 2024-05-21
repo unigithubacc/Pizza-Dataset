@@ -6,7 +6,7 @@ def main():
     
     st.title("Dynamische Datenfilterung")
 
-    filter_text = st.text_input("Filter", "")
+    filter_text = st.text_input("Filter for state_abbr", "")
 
     @st.cache_data(ttl=60)
     def fetch_data(filter: str):

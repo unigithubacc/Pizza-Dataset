@@ -12,7 +12,7 @@ from typing import List
 
 app = FastAPI()
 
-DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza_data"
+DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(
@@ -59,7 +59,7 @@ async def startup():
 async def read_stores(filter: Optional[str] = Query(None, title="Filter", description="Filter for stores"), session: AsyncSession = Depends(get_session)):
     query = select(Store)
     if filter:
-        query = query.where(Store.city.like(f"%{filter}%"))
+        query = query.where(Store.state_abbr.like(f"%{filter}%")) 
     result = await session.execute(query)
     stores = result.scalars().all()
     return [StoreModel.from_orm(store) for store in stores]
