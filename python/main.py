@@ -6,9 +6,12 @@ from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Optional
 from typing import AsyncGenerator
-from sqlalchemy import Column, Integer, String, Text, Double, Float
+from sqlalchemy import Column, Integer, String, Text, Double, Float, join
 from pydantic import BaseModel
 from typing import List
+from sqlalchemy.sql.expression import func
+from sqlalchemy import text
+
 
 app = FastAPI()
 
@@ -45,6 +48,19 @@ class StoreModel(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+        
+    class ProductSales(Base):
+        __tablename__ = "product_sales"
+        SKU = Column(String, primary_key=True)
+        name = Column(String)
+        TotalSold = Column(Integer)
+    
+    class OrderItems(Base):
+        __tablename__ = "order_items"
+        sku = Column(String, primary_key=True)
+        orderid = Column(Integer)
+    # Weitere Spalten nach Bedarf
+    
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
@@ -63,6 +79,20 @@ async def read_stores(filter: Optional[str] = Query(None, title="Filter", descri
     result = await session.execute(query)
     stores = result.scalars().all()
     return [StoreModel.from_orm(store) for store in stores]
+
+@app.get("/top-selling-products")
+async def get_top_selling_products(session: AsyncSession = Depends(get_session)):
+    query = text("""
+    SELECT products.sku, products.name, COUNT(order_items.sku) AS TotalSold
+    FROM public.products
+    INNER JOIN public.order_items ON products.sku = order_items.sku
+    INNER JOIN public.orders ON order_items.orderid = orders.orderid
+    GROUP BY products.sku, products.name
+    ORDER BY TotalSold DESC
+    """)
+    result = await session.execute(query)
+    products = result.fetchall()
+    return [{"SKU": product[0], "name": product[1], "TotalSold": product[2]} for product in products]
 
 @app.get('/')
 def read_root():

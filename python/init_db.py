@@ -9,7 +9,13 @@ try:
     cur = conn.cursor()
     
     # Ausführung einer SQL-Abfrage, um alle Zeilen aus der Tabelle 'stores' abzurufen
-    cur.execute("SELECT * FROM stores;")
+    cur.execute("SELECT products.SKU, products.name, COUNT(order_items.SKU) AS TotalSold " +
+            "FROM public.products " +
+            "INNER JOIN public.order_items ON products.sku = order_items.sku " +
+            "INNER JOIN public.orders ON order_items.orderid = orders.orderid " +
+            "GROUP BY products.sku, products.name " +
+            "ORDER BY TotalSold DESC " +
+            "LIMIT 5")
     print("SQL-Abfrage ausgeführt.")
     
     # Abrufen aller Ergebnisse

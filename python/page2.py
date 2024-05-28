@@ -1,7 +1,21 @@
 import streamlit as st
+import requests
+
+def fetch_top_pizzas():
+    response = requests.get('http://localhost:8000/top-selling-products')
+    # Überprüfen Sie, ob die Antwort erfolgreich war
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        st.error("Fehler beim Abrufen der Daten.")
+        return []
 
 def main():
-    st.title("Seite 2")
-    st.write("Willkommen auf Seite 2")
+    st.title("Top Verkaufte Pizzen")
 
-# Entferne den if __name__ == "__main__": Block, da die Funktion von app.py aufgerufen wird.
+    pizzas_data = fetch_top_pizzas()
+    if pizzas_data:
+        st.write(pizzas_data)
+        # Erstellen eines Balkendiagramms
+        st.bar_chart([item["TotalSold"] for item in pizzas_data])  # Korrigierte Schlüsselbezeichnung

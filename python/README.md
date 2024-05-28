@@ -10,7 +10,7 @@ cd Python
 .\env\Scripts\activate
 
 requirements installieren:
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 
 
 Programmausführung
