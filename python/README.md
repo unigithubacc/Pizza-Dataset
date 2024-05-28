@@ -15,8 +15,10 @@ pip install -r requirements.txt
 
 Programmausführung
 1. backend starten:
-uvicorn main:app --reload
+(man muss im \Pizza-Dataset Ordner sein)
+uvicorn python.main:app --reload
 
 2. frontend starten:
+(man muss im \Pizza-Dataset\Python Ordner sein)
 streamlit run app.py
 

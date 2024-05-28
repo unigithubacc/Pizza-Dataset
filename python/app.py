@@ -1,6 +1,6 @@
 import streamlit as st
-from page1 import main as page1_main
-from page2 import main as page2_main
+from frontend.page1 import main as page1_main
+from frontend.page2 import main as page2_main
 
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
