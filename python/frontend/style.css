@@ -24,7 +24,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stButton button {
-    background-color: #5dade2; /* Helles Blau für Buttons */
+    background-color: #e3eaee; /* Helles Blau für Buttons */
     color: white;
     border: none;
     padding: 10px 20px;
@@ -33,7 +33,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stButton button:hover {
-    background-color: #85c1e9; /* Noch helleres Blau beim Hover */
+    background-color: #85e9dc; /* Noch helleres Blau beim Hover */
 }
 
 .stSelectbox .stSelectboxContent {

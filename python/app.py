@@ -18,7 +18,7 @@ PAGES = {
 }
 
 # CSS-Datei laden
-load_css("frontend\style.css")
+load_css("frontend\\style.css")
 
 # Navbar mit einem Dropdown-Menü
 st.sidebar.title("Navigation")
