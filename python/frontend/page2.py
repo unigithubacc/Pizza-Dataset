@@ -13,17 +13,17 @@ def fetch_top_selling_stores():
 
 def create_store_bar_chart(data):
     store_ids = sorted(set([item['storeID'] for item in data]))
-    total_revenue = {store_id: [] for store_id in store_ids}
+    total_revenue = {store_id: sum(item['TotalRevenue'] for item in data if item['storeID'] == store_id) for store_id in store_ids}
 
-    for item in data:
-        total_revenue[item['storeID']].append(item['TotalRevenue'])
+    # Sortiere die Stores basierend auf ihrem Gesamtumsatz
+    sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
 
     fig = go.Figure()
 
-    for store_id in store_ids:
+    for store_id in sorted_store_ids:
         fig.add_trace(go.Bar(
             x=[store_id],  # Da nur eine Kategorie pro Bar vorhanden ist
-            y=total_revenue[store_id],
+            y=[total_revenue[store_id]],  # Passen Sie dies an, falls Sie mehrere Balken für jede Kategorie haben möchten
             name=f'Store {store_id}',
             legendgroup=f'Store {store_id}',
             showlegend=True
