@@ -52,6 +52,7 @@ class StoreModel(BaseModel):
         __tablename__ = "product_sales"
         SKU = Column(String, primary_key=True)
         name = Column(String)
+        size = Column(String)
         TotalSold = Column(Integer)
     
     class OrderItems(Base):
@@ -84,16 +85,16 @@ async def read_stores(filter: Optional[str] = Query(None, title="Filter", descri
 @router.get("/top-selling-products")
 async def get_top_selling_products(session: AsyncSession = Depends(get_session)):
     query = text("""
-    SELECT products.sku, products.name, COUNT(order_items.sku) AS TotalSold
+    SELECT products.sku, products.name, products.size, COUNT(order_items.sku) AS TotalSold
     FROM public.products
     INNER JOIN public.order_items ON products.sku = order_items.sku
     INNER JOIN public.orders ON order_items.orderid = orders.orderid
-    GROUP BY products.sku, products.name
-    ORDER BY TotalSold DESC
+    GROUP BY products.sku, products.name, products.size
+
     """)
     result = await session.execute(query)
     products = result.fetchall()
-    return [{"SKU": product[0], "name": product[1], "TotalSold": product[2]} for product in products]
+    return [{"SKU": product[0], "name": product[1],"size": product[2], "TotalSold": product[3]} for product in products]
 
 @router.get('/')
 def read_root():
