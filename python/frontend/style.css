@@ -1,0 +1,42 @@
+/* style.css */
+
+body {
+    background-color: #ffffff; /* Weißer Hintergrund */
+    color: #333333; /* Dunkle Schriftfarbe für guten Kontrast */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.sidebar .sidebar-content {
+    background-color: #f0f8ff; /* Sehr helles Blau für die Seitenleiste */
+    color: #333333; /* Dunkle Schriftfarbe für die Seitenleiste */
+}
+
+.sidebar .sidebar-content a {
+    color: #333333; /* Dunkle Linkfarbe in der Seitenleiste */
+}
+
+.sidebar .sidebar-content a:hover {
+    color: #5dade2; /* Hellere Linkfarbe beim Hover */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff; /* Dunkles Grau-Blau für Überschriften */
+}
+
+.stButton button {
+    background-color: #5dade2; /* Helles Blau für Buttons */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.stButton button:hover {
+    background-color: #85c1e9; /* Noch helleres Blau beim Hover */
+}
+
+.stSelectbox .stSelectboxContent {
+    background-color: #f7fbff; /* Sehr helles Blau für das Selectbox-Feld */
+    color: #333333; /* Dunkle Schriftfarbe für das Selectbox-Feld */
+}
