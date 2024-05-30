@@ -1,6 +1,6 @@
 import streamlit as st
+import plotly.graph_objects as go
 import requests
-import matplotlib.pyplot as plt
 
 def fetch_top_pizzas():
     response = requests.get('http://localhost:8000/top-selling-products')
@@ -11,20 +11,31 @@ def fetch_top_pizzas():
         st.error("Fehler beim Abrufen der Daten.")
         return []
 
-def create_barchart(data):
-    fig, ax = plt.subplots()
-    pizza_names = []
-    total_sales = []
-    
+def create_stacked_barchart(data):
+    sizes = sorted(set([item['size'] for item in data]))
+    pizza_names = sorted(set([item['name'] for item in data]))
+
+    sales_by_size = {size: [] for size in sizes}
     for item in data:
-        pizza_names.append(item['name'])
-        total_sales.append(item['totalsold'])
-    
-    ax.bar(pizza_names, total_sales)
-    ax.set_xlabel('Pizza Name')
-    ax.set_ylabel('Total Sold')
-    ax.set_title('Verkaufszahlen verschiedener Pizzas')
-    
+        sales_by_size[item['size']].append(item['TotalSold'])
+
+    fig = go.Figure()
+
+    for size in sizes:
+        fig.add_trace(go.Bar(
+            x=pizza_names,
+            y=sales_by_size[size],
+            name=size,
+            legendgroup=size,
+            showlegend=True
+        ))
+
+    fig.update_layout(barmode='stack',
+                      title='Verkaufszahlen verschiedener Pizzas nach Größe',
+                      xaxis_tickangle=-45,
+                      xaxis_title='Pizza Name',
+                      yaxis_title='Total Sold')
+
     return fig
 
 def main():
@@ -32,10 +43,5 @@ def main():
     pizzas_data = fetch_top_pizzas()
     if pizzas_data:
         st.write(pizzas_data)
-        
-        # Erstellen und Anzeigen des Balkendiagramms
-        fig = create_barchart(pizzas_data)
-        st.pyplot(fig)
-
-if __name__ == "__main__":
-    main()
+        fig = create_stacked_barchart(pizzas_data)
+        st.plotly_chart(fig)
