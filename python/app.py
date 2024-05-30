@@ -11,9 +11,9 @@ def load_css(file_name):
 
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
-    "Seite 1": page1_main,
-    "Seite 2": page2_main,
-    "Seite 3": page3_main,
+    "Products": page1_main,
+    "Store": page2_main,
+    "Customers": page3_main,
     "Seite 4": page4_main
 }
 
@@ -22,7 +22,7 @@ load_css("frontend\\style.css")
 
 # Navbar mit einem Dropdown-Menü
 st.sidebar.title("Navigation")
-selection = st.sidebar.selectbox("Seite auswählen", list(PAGES.keys()))
+selection = st.sidebar.selectbox("Select page", list(PAGES.keys()))
 
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]

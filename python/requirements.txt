@@ -36,12 +36,14 @@ markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 matplotlib==3.9.0
 mdurl==0.1.2
+mplcursors==0.5.3
 mypy-extensions==1.0.0
 numpy==1.26.4
 orjson==3.10.3
 packaging==24.0
 pandas==2.2.2
 pillow==10.3.0
+plotly==5.22.0
 protobuf==4.25.3
 psycopg2==2.9.9
 psycopg2-binary==2.9.9
