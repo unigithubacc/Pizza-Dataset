@@ -89,8 +89,7 @@ async def get_top_selling_products(session: AsyncSession = Depends(get_session))
         FROM public.products
         INNER JOIN public.order_items ON products.sku = order_items.sku
         INNER JOIN public.orders ON order_items.orderid = orders.orderid
-        GROUP BY products.name, products.size
-        ORDER BY TotalSold DESC;
+        GROUP BY products.name, products.size;
     """)
     result = await session.execute(query)
     products = result.fetchall()
