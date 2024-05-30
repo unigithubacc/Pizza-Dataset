@@ -96,6 +96,38 @@ async def get_top_selling_products(session: AsyncSession = Depends(get_session))
     products = result.fetchall()
     return [{"name": product[0], "size": product[1], "TotalSold": product[2]} for product in products]
 
+@router.get("/top-selling-stores")
+async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT
+            stores.storeID,
+            stores.zipcode,
+            stores.State_abbr,
+            stores.latitude,
+            stores.longitude,
+            stores.city,
+            stores.state,
+            SUM(orders.total) AS TotalRevenue
+        FROM public.stores
+        INNER JOIN public.orders ON stores.storeID = orders.storeID
+        GROUP BY stores.storeID, stores.zipcode, stores.State_abbr, stores.latitude, stores.longitude, stores.city, stores.state
+        ORDER BY TotalRevenue DESC;
+    """)
+    result = await session.execute(query)
+    stores = result.fetchall()
+    return [
+        {
+            "storeID": store[0],
+            "zipcode": store[1],
+            "State_abbr": store[2],
+            "latitude": store[3],
+            "longitude": store[4],
+            "city": store[5],
+            "state": store[6],
+            "TotalRevenue": store[7]
+        } for store in stores
+    ]
+
 @router.get('/')
 def read_root():
     return {"Hello": "World"}
