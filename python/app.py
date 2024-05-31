@@ -3,6 +3,7 @@ from frontend.page1 import main as page1_main
 from frontend.page2 import main as page2_main
 from frontend.page3 import main as page3_main
 from frontend.page4 import main as page4_main
+from frontend.page5 import main as page5_main
 
 # Lade die CSS-Datei
 def load_css(file_name):
@@ -14,7 +15,8 @@ PAGES = {
     "Products": page1_main,
     "Store": page2_main,
     "Customers": page3_main,
-    "Seite 4": page4_main
+    "Dynamische Datenfilterung": page4_main,
+    "Seite 5": page5_main
 }
 
 # CSS-Datei laden
