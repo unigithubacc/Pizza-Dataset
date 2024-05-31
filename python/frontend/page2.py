@@ -20,13 +20,15 @@ def create_store_bar_chart(data):
 
     fig = go.Figure()
 
+    # Setzt die Farbe aller Balken auf Blau
     for store_id in sorted_store_ids:
         fig.add_trace(go.Bar(
             x=[store_id],  # Da nur eine Kategorie pro Bar vorhanden ist
             y=[total_revenue[store_id]],  # Passen Sie dies an, falls Sie mehrere Balken für jede Kategorie haben möchten
             name=f'Store {store_id}',
             legendgroup=f'Store {store_id}',
-            showlegend=True
+            showlegend=True,
+            marker_color='blue'  # Alle Balken werden blau gefärbt
         ))
 
     fig.update_layout(barmode='group',  # Änderung von 'bar' zu 'group'
