@@ -163,23 +163,43 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
     ]    
 
 @router.get("/sales-distribution")
-async def get_sales_distribution(session: AsyncSession = Depends(get_session)):
-    query = text("""
-            SELECT 
-        p.Category, 
-        SUM(o.total) AS TotalSales
-    FROM 
-        orders o
-    JOIN 
-        order_items oi ON o.orderID = oi.orderID
-    JOIN 
-        products p ON oi.SKU = p.SKU
-    GROUP BY 
-        p.Category;
-    """)
-    result = await session.execute(query)
+async def get_sales_distribution(year: Optional[int] = None, session: AsyncSession = Depends(get_session)):
+    if year is not None:
+        query = text("""
+                SELECT 
+            p.Category, 
+            SUM(o.total) AS TotalSales
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderID = oi.orderID
+        JOIN 
+            products p ON oi.SKU = p.SKU
+        WHERE
+            EXTRACT(YEAR FROM o.OrderDate) = :year
+        GROUP BY 
+            p.Category;
+        """)
+        params = {"year": year}
+    else:
+        query = text("""
+                SELECT 
+            p.Category, 
+            SUM(o.total) AS TotalSales
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderID = oi.orderID
+        JOIN 
+            products p ON oi.SKU = p.SKU
+        GROUP BY 
+            p.Category;
+        """)
+        params = {}
+
+    result = await session.execute(query, params)
     sales_distribution = result.fetchall()
-     # Convert the result to a list of dictionaries
+    # Convert the result to a list of dictionaries
     sales_distribution_list = [
         {"category": row[0], "total_sold": row[1]} for row in sales_distribution
     ]
