@@ -10,7 +10,10 @@ from sqlalchemy import Column, Integer, String, Text, Double, Float, join
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.sql.expression import func
-from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import text
+from sqlalchemy import select
+from pydantic import BaseModel
 
 
 
@@ -61,6 +64,9 @@ class StoreModel(BaseModel):
         orderid = Column(Integer)
     # Weitere Spalten nach Bedarf
     
+    class SalesDistribution(BaseModel):
+            category: str
+            total_sold: float
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
@@ -155,6 +161,29 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
         }
         for sale in sales_data
     ]    
+
+@router.get("/sales-distribution")
+async def get_sales_distribution(session: AsyncSession = Depends(get_session)):
+    query = text("""
+            SELECT 
+        p.Category, 
+        SUM(o.total) AS TotalSales
+    FROM 
+        orders o
+    JOIN 
+        order_items oi ON o.orderID = oi.orderID
+    JOIN 
+        products p ON oi.SKU = p.SKU
+    GROUP BY 
+        p.Category;
+    """)
+    result = await session.execute(query)
+    sales_distribution = result.fetchall()
+     # Convert the result to a list of dictionaries
+    sales_distribution_list = [
+        {"category": row[0], "total_sold": row[1]} for row in sales_distribution
+    ]
+    return sales_distribution_list
 
 @router.get('/')
 def read_root():
