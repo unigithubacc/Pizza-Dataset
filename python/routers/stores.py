@@ -126,6 +126,35 @@ async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
             "TotalRevenue": store[7]
         } for store in stores
     ]
+    
+@router.get('/sales-by-store/{storeid}/')
+async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            EXTRACT(YEAR FROM orderdate) AS year,
+            CONCAT('Q', EXTRACT(QUARTER FROM orderdate)) AS quarter,
+            COUNT(orderid) AS number_of_sales
+        FROM 
+            orders
+        WHERE 
+            storeid = :storeid
+        GROUP BY 
+            EXTRACT(YEAR FROM orderdate),
+            EXTRACT(QUARTER FROM orderdate)
+        ORDER BY 
+            year,
+            quarter;
+    """)
+    result = await session.execute(query, {'storeid': storeid})
+    sales_data = result.fetchall()
+    return [
+        {
+            "year": sale[0],
+            "quarter": sale[1],
+            "number_of_sales": sale[2]
+        }
+        for sale in sales_data
+    ]    
 
 @router.get('/')
 def read_root():
