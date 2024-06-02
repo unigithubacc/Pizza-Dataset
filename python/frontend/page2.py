@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
 import plotly.graph_objects as go
+from streamlit_plotly_events import plotly_events
 
-# Funktion zum Abrufen der Daten der Top-Selling Stores
+# Function to fetch top-selling stores data
 def fetch_top_selling_stores():
     response = requests.get('http://localhost:8000/top-selling-stores')
     if response.status_code == 200:
@@ -12,7 +13,7 @@ def fetch_top_selling_stores():
         st.error("Fehler beim Abrufen der Daten.")
         return []
 
-# Funktion zum Abrufen der Verkaufszahlen für ein bestimmtes Geschäft
+# Function to fetch sales data for a specific store
 def fetch_sales_by_store(store_id):
     response = requests.get(f'http://localhost:8000/sales-by-store/{store_id}/')
     if response.status_code == 200:
@@ -22,36 +23,36 @@ def fetch_sales_by_store(store_id):
         st.error("Fehler beim Abrufen der Verkaufsdaten.")
         return []
 
-# Funktion zum Erstellen des Balkendiagramms für die Top-Selling Stores
+# Function to create bar chart for top-selling stores
 def create_store_bar_chart(data):
     store_ids = sorted(set([item['storeID'] for item in data]))
     total_revenue = {store_id: sum(item['TotalRevenue'] for item in data if item['storeID'] == store_id) for store_id in store_ids}
 
-    # Sortiere die Stores basierend auf ihrem Gesamtumsatz
     sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
 
     fig = go.Figure()
 
     for store_id in sorted_store_ids:
         fig.add_trace(go.Bar(
-            x=[store_id],  
-            y=[total_revenue[store_id]],  
+            x=[store_id],
+            y=[total_revenue[store_id]],
             name=f'Store {store_id}',
             legendgroup=f'Store {store_id}',
             showlegend=True,
             marker_color='blue',
-            customdata=[store_id],  # Speichere die store_id für die Callback-Funktion
+            customdata=[store_id],
             hoverinfo='x+y'
         ))
 
     fig.update_layout(barmode='group',
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
-                      yaxis_title='Total Revenue in $')
+                      yaxis_title='Total Revenue in $',
+                      clickmode='event+select')
 
     return fig
 
-# Funktion zum Erstellen des Liniendiagramms für die Verkaufszahlen eines bestimmten Geschäfts
+# Function to create line chart for sales data of a specific store
 def create_sales_line_chart(data, store_id):
     fig = go.Figure()
 
@@ -71,39 +72,21 @@ def create_sales_line_chart(data, store_id):
 
     return fig
 
-import streamlit as st
-
 def main():
     st.title("Top Selling Stores")
 
     stores_data = fetch_top_selling_stores()
     if stores_data:
         fig = create_store_bar_chart(stores_data)
-        st.plotly_chart(fig)
-        
-        # Extract unique store IDs and calculate total revenue for each store
-        store_ids = set([item['storeID'] for item in stores_data])
-        total_revenue = {store_id: sum(item['TotalRevenue'] for item in stores_data if item['storeID'] == store_id) for store_id in store_ids}
+        selected_points = plotly_events(fig, click_event=True)
 
-        # Sort store IDs based on their total revenue
-        sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
-
-        fig = create_store_bar_chart(stores_data)
-        # Use session state to store the selected store ID
-        if 'selected_store_id' not in st.session_state:
-            st.session_state.selected_store_id = None
-        selected_store_id = st.selectbox(
-            "Select a Store",
-            options=[{'id': store_id, 'label': f'Store {store_id}'} for store_id in sorted_store_ids],
-            index=None,
-            format_func=lambda x: f'Store {x["id"]}'
-        )
-        if selected_store_id:
-            st.session_state.selected_store_id = selected_store_id['id']
-        
-        if st.session_state.selected_store_id:
-            store_id = st.session_state.selected_store_id
-            sales_data = fetch_sales_by_store(store_id)
+        if selected_points:
+            # Extrahieren Sie den store_id aus der x-Koordinate
+            selected_store_id = selected_points[0]['x']
+            st.write(f"Selected Store ID: {selected_store_id}")  # Debugging Line
+            sales_data = fetch_sales_by_store(selected_store_id)
             if sales_data:
-                sales_fig = create_sales_line_chart(sales_data, store_id)
-                st.plotly_chart(sales_fig)
+                sales_fig = create_sales_line_chart(sales_data, selected_store_id)
+                st.plotly_chart(sales_fig, use_container_width=True)
+        else:
+            st.warning("select a store ID to see the number of sales for that store")
