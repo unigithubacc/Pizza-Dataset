@@ -20,11 +20,17 @@ PAGES = {
 }
 
 # CSS-Datei laden
-load_css("frontend\\style.css")
+load_css("frontend/style.css")
 
-# Navbar mit einem Dropdown-Menü
+# URL-Parameter auslesen
+page_param = st.query_params.get('page', 'Products')
+
+# Sidebar Navigation
 st.sidebar.title("Navigation")
-selection = st.sidebar.selectbox("Select page", list(PAGES.keys()))
+selection = st.sidebar.selectbox("Select page", list(PAGES.keys()), index=list(PAGES.keys()).index(page_param))
+
+# Setze URL-Parameter basierend auf der Auswahl in der Sidebar
+st.query_params.page = selection
 
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]
