@@ -163,10 +163,9 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
     ]    
 
 @router.get("/sales-distribution")
-async def get_sales_distribution(year: Optional[int] = None, session: AsyncSession = Depends(get_session)):
-    if year is not None:
-        query = text("""
-                SELECT 
+async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[str] = None, session: AsyncSession = Depends(get_session)):
+    base_query = """
+        SELECT 
             p.Category, 
             SUM(o.total) AS TotalSales
         FROM 
@@ -175,34 +174,38 @@ async def get_sales_distribution(year: Optional[int] = None, session: AsyncSessi
             order_items oi ON o.orderID = oi.orderID
         JOIN 
             products p ON oi.SKU = p.SKU
-        WHERE
-            EXTRACT(YEAR FROM o.OrderDate) = :year
-        GROUP BY 
-            p.Category;
-        """)
-        params = {"year": year}
-    else:
-        query = text("""
-                SELECT 
-            p.Category, 
-            SUM(o.total) AS TotalSales
-        FROM 
-            orders o
-        JOIN 
-            order_items oi ON o.orderID = oi.orderID
-        JOIN 
-            products p ON oi.SKU = p.SKU
-        GROUP BY 
-            p.Category;
-        """)
-        params = {}
+    """
+    
+    filters = []
+    params = {}
 
+    if year is not None:
+        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year")
+        params["year"] = year
+
+    if quarter and quarter != "All":
+        if quarter == "Q1":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (1, 2, 3)")
+        elif quarter == "Q2":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (4, 5, 6)")
+        elif quarter == "Q3":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
+        elif quarter == "Q4":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
+
+    if filters:
+        base_query += " WHERE " + " AND ".join(filters)
+
+    base_query += " GROUP BY p.Category;"
+
+    query = text(base_query)
     result = await session.execute(query, params)
     sales_distribution = result.fetchall()
-    # Convert the result to a list of dictionaries
+    
     sales_distribution_list = [
         {"category": row[0], "total_sold": row[1]} for row in sales_distribution
     ]
+    
     return sales_distribution_list
 
 @router.get('/')

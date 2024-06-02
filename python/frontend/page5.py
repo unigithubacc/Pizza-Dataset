@@ -4,12 +4,16 @@ import requests
 from collections import defaultdict
 
 
-def fetch_sales_distribution(year=None):
+def fetch_sales_distribution(year=None, quarter=None):
     try:
         url = 'http://localhost:8000/sales-distribution'
+        params = {}
         if year and year != "All":
-            url += f'?year={year}'
-        response = requests.get(url)  
+            params['year'] = year
+        if quarter and quarter != "All":
+            params['quarter'] = quarter
+        
+        response = requests.get(url, params=params)  
         response.raise_for_status()  
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -25,10 +29,11 @@ def create_pie_chart(data):
         "Vegetarian": "#636EFA",
         "Specialty": "#EF553B",
         "Classic": "#00CC96",
+        # Add any other categories that you have
     }
     
     # Apply color mapping
-    colors = [color_map.get(category, "#000000") for category in categories]  # Default to black if category not in map
+    colors = [color_map.get(category, "#FFFFFF") for category in categories]  # Default to white if category not in map
 
     fig = go.Figure(data=[go.Pie(labels=categories, values=total_sales, hole=.3, marker=dict(colors=colors))])
     fig.update_layout(title_text='Sales Distribution by Product Category')
@@ -39,9 +44,12 @@ def main():
     st.title("Sales Distribution by Product Category")
     
     # Dropdown menu for selecting years including "All"
-    selected_year = st.selectbox("Select year", ["All", 2020, 2021, 2022])
+    selected_year = st.selectbox("Select year", ["All", 2020, 2021, 2022], index=0)
+    
+    # Dropdown menu for selecting quarters including "All"
+    selected_quarter = st.selectbox("Select quarter", ["All", "Q1", "Q2", "Q3", "Q4"], index=0)
 
-    sales_data = fetch_sales_distribution(selected_year)
+    sales_data = fetch_sales_distribution(selected_year, selected_quarter)
     if sales_data:
         fig = create_pie_chart(sales_data)
         st.plotly_chart(fig)
