@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -162,51 +163,65 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
         for sale in sales_data
     ]    
 
-@router.get("/sales-distribution")
-async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[str] = None, session: AsyncSession = Depends(get_session)):
-    base_query = """
+# Costumer Distribution by Location
+@router.get("/customer-locations")
+async def get_customer_locations(session: AsyncSession = Depends(get_session)):
+    query = text("""
         SELECT 
-            p.Category, 
-            SUM(o.total) AS TotalSales
+            latitude, 
+            longitude
         FROM 
-            orders o
-        JOIN 
-            order_items oi ON o.orderID = oi.orderID
-        JOIN 
-            products p ON oi.SKU = p.SKU
-    """
-    
-    filters = []
-    params = {}
+            customers;
+    """)
+    try:
+        result = await session.execute(query)
+        customer_locations = result.fetchall()
 
-    if year is not None:
-        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year")
-        params["year"] = year
+        # Add logging
+        logging.info(f"Customer locations data: {customer_locations}")
 
-    if quarter and quarter != "All":
-        if quarter == "Q1":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (1, 2, 3)")
-        elif quarter == "Q2":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (4, 5, 6)")
-        elif quarter == "Q3":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
-        elif quarter == "Q4":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
+        # Convert the result to a list of dictionaries
+        customer_locations_list = [
+            {"latitude": row[0], "longitude": row[1]} for row in customer_locations
+        ]
 
-    if filters:
-        base_query += " WHERE " + " AND ".join(filters)
+        logging.info(f"Formatted customer locations data: {customer_locations_list}")
 
-    base_query += " GROUP BY p.Category;"
+        return customer_locations_list
+    except Exception as e:
+        logging.error(f"Error fetching customer locations: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-    query = text(base_query)
-    result = await session.execute(query, params)
-    sales_distribution = result.fetchall()
-    
-    sales_distribution_list = [
-        {"category": row[0], "total_sold": row[1]} for row in sales_distribution
-    ]
-    
-    return sales_distribution_list
+    # Store Locations
+@router.get("/store-locations")
+async def get_store_locations(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            storeID, 
+            latitude, 
+            longitude, 
+            city, 
+            state
+        FROM 
+            stores;
+    """)
+    try:
+        result = await session.execute(query)
+        store_locations = result.fetchall()
+        store_location_list = [
+            {
+                "storeID": row[0], 
+                "latitude": row[1], 
+                "longitude": row[2], 
+                "city": row[3],
+                "state": row[4]
+            } for row in store_locations
+        ]
+        return store_location_list
+    except Exception as e:
+        logging.error(f"Error fetching store locations: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 @router.get('/')
 def read_root():
