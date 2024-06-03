@@ -14,3 +14,31 @@
         }
     ]
 }
+
+/*
+
+__init__.py noch hinzufügen
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Backend Starten",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": ["--host", "127.0.0.1"]
+        },
+        {
+            "name": "Frontend Starten",
+            "type": "shell",
+            "request": "launch",
+            "command": "streamlit run ${workspaceFolder}/app.py",
+            "presentation": {
+                "reveal": "always"
+            }
+        }
+    ]
+}
+*/
