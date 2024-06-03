@@ -208,6 +208,6 @@ async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[s
     
     return sales_distribution_list
 
-@router.get('/')
+@router.get('/stores')
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "World123"}
