@@ -4,7 +4,7 @@ import requests
 from collections import defaultdict
 
 def fetch_top_pizzas():
-    response = requests.get('http://localhost:8000/top-selling-products')
+    response = requests.get('http://localhost:8000/products/top-selling-products')
     if response.status_code == 200:
         return response.json()
     else:

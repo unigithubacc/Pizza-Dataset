@@ -28,6 +28,69 @@ Base = declarative_base()
 
 router = APIRouter()
 
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+@router.get("/products/top-selling-products")
+async def get_top_selling_products(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT products.name, products.size, COUNT(order_items.sku) AS TotalSold
+        FROM public.products
+        INNER JOIN public.order_items ON products.sku = order_items.sku
+        INNER JOIN public.orders ON order_items.orderid = orders.orderid
+        GROUP BY products.name, products.size;
+    """)
+    result = await session.execute(query)
+    products = result.fetchall()
+    return [{"name": product[0], "size": product[1], "TotalSold": product[2]} for product in products]
+
+@router.get("/sales-distribution")
+async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[str] = None, session: AsyncSession = Depends(get_session)):
+    base_query = """
+        SELECT 
+            p.Category, 
+            SUM(o.total) AS TotalSales
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderID = oi.orderID
+        JOIN 
+            products p ON oi.SKU = p.SKU
+    """
+    
+    filters = []
+    params = {}
+
+    if year is not None:
+        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year")
+        params["year"] = year
+
+    if quarter and quarter != "All":
+        if quarter == "Q1":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (1, 2, 3)")
+        elif quarter == "Q2":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (4, 5, 6)")
+        elif quarter == "Q3":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
+        elif quarter == "Q4":
+            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
+
+    if filters:
+        base_query += " WHERE " + " AND ".join(filters)
+
+    base_query += " GROUP BY p.Category;"
+
+    query = text(base_query)
+    result = await session.execute(query, params)
+    sales_distribution = result.fetchall()
+    
+    sales_distribution_list = [
+        {"category": row[0], "total_sold": row[1]} for row in sales_distribution
+    ]
+    
+    return sales_distribution_list
+
 @router.get('/products')
 def read_root():
     return {"Hello": "World456"}

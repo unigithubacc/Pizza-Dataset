@@ -89,19 +89,6 @@ async def read_stores(filter: Optional[str] = Query(None, title="Filter", descri
     stores = result.scalars().all()
     return [StoreModel.from_orm(store) for store in stores]
 
-@router.get("/top-selling-products")
-async def get_top_selling_products(session: AsyncSession = Depends(get_session)):
-    query = text("""
-        SELECT products.name, products.size, COUNT(order_items.sku) AS TotalSold
-        FROM public.products
-        INNER JOIN public.order_items ON products.sku = order_items.sku
-        INNER JOIN public.orders ON order_items.orderid = orders.orderid
-        GROUP BY products.name, products.size;
-    """)
-    result = await session.execute(query)
-    products = result.fetchall()
-    return [{"name": product[0], "size": product[1], "TotalSold": product[2]} for product in products]
-
 @router.get("/top-selling-stores")
 async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
     query = text("""
@@ -162,112 +149,6 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
         }
         for sale in sales_data
     ]    
-
-@router.get("/sales-distribution")
-async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[str] = None, session: AsyncSession = Depends(get_session)):
-    base_query = """
-        SELECT 
-            p.Category, 
-            SUM(o.total) AS TotalSales
-        FROM 
-            orders o
-        JOIN 
-            order_items oi ON o.orderID = oi.orderID
-        JOIN 
-            products p ON oi.SKU = p.SKU
-    """
-    
-    filters = []
-    params = {}
-
-    if year is not None:
-        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year")
-        params["year"] = year
-
-    if quarter and quarter != "All":
-        if quarter == "Q1":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (1, 2, 3)")
-        elif quarter == "Q2":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (4, 5, 6)")
-        elif quarter == "Q3":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
-        elif quarter == "Q4":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
-
-    if filters:
-        base_query += " WHERE " + " AND ".join(filters)
-
-    base_query += " GROUP BY p.Category;"
-
-    query = text(base_query)
-    result = await session.execute(query, params)
-    sales_distribution = result.fetchall()
-    
-    sales_distribution_list = [
-        {"category": row[0], "total_sold": row[1]} for row in sales_distribution
-    ]
-    
-    return sales_distribution_list
-
-# Costumer Distribution by Location
-@router.get("/customer-locations")
-async def get_customer_locations(session: AsyncSession = Depends(get_session)):
-    query = text("""
-        SELECT 
-            latitude, 
-            longitude
-        FROM 
-            customers;
-    """)
-    try:
-        result = await session.execute(query)
-        customer_locations = result.fetchall()
-
-        # Add logging
-        logging.info(f"Customer locations data: {customer_locations}")
-
-        # Convert the result to a list of dictionaries
-        customer_locations_list = [
-            {"latitude": row[0], "longitude": row[1]} for row in customer_locations
-        ]
-
-        logging.info(f"Formatted customer locations data: {customer_locations_list}")
-
-        return customer_locations_list
-    except Exception as e:
-        logging.error(f"Error fetching customer locations: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-    # Store Locations
-@router.get("/store-locations")
-async def get_store_locations(session: AsyncSession = Depends(get_session)):
-    query = text("""
-        SELECT 
-            storeID, 
-            latitude, 
-            longitude, 
-            city, 
-            state
-        FROM 
-            stores;
-    """)
-    try:
-        result = await session.execute(query)
-        store_locations = result.fetchall()
-        store_location_list = [
-            {
-                "storeID": row[0], 
-                "latitude": row[1], 
-                "longitude": row[2], 
-                "city": row[3],
-                "state": row[4]
-            } for row in store_locations
-        ]
-        return store_location_list
-    except Exception as e:
-        logging.error(f"Error fetching store locations: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
 
 @router.get('/stores')
 def read_root():
