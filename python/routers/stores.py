@@ -51,23 +51,6 @@ class StoreModel(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
-        
-    class ProductSales(Base):
-        __tablename__ = "product_sales"
-        SKU = Column(String, primary_key=True)
-        name = Column(String)
-        size = Column(String)
-        TotalSold = Column(Integer)
-    
-    class OrderItems(Base):
-        __tablename__ = "order_items"
-        sku = Column(String, primary_key=True)
-        orderid = Column(Integer)
-    # Weitere Spalten nach Bedarf
-    
-    class SalesDistribution(BaseModel):
-            category: str
-            total_sold: float
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
