@@ -131,6 +131,38 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
             "number_of_sales": sale[2]
         }
         for sale in sales_data
+    ]
+    
+@router.get("/revenue-by-store/{storeid}")
+async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            EXTRACT(YEAR FROM orderdate) AS year,
+            CONCAT('Q', EXTRACT(QUARTER FROM orderdate)) AS quarter,
+            SUM(total) AS total_revenue
+        FROM 
+            orders
+        WHERE 
+            storeid = :storeid
+        GROUP BY 
+            EXTRACT(YEAR FROM orderdate),
+            EXTRACT(QUARTER FROM orderdate)
+        ORDER BY 
+            year,
+            quarter;
+    """)
+    
+    result = await session.execute(query, {"storeid": storeid})
+    sales_data = result.fetchall()
+    if not sales_data:
+        raise HTTPException(status_code=404, detail="No sales data found for this store.")
+    return [
+        {
+            "year": sale[0],
+            "quarter": sale[1],
+            "total_revenue": sale[2]
+        }
+        for sale in sales_data
     ]    
 
 @router.get('/stores')

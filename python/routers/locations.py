@@ -28,6 +28,10 @@ Base = declarative_base()
 
 router = APIRouter()
 
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
 @router.get('/locations')
 def read_root():
     return {"Hello": "World111213"}
