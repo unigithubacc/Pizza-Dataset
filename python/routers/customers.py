@@ -36,32 +36,23 @@ router = APIRouter()
 
 # Costumer Distribution by Location
 @router.get("/customer-locations")
-async def get_customer_locations(session: AsyncSession = Depends(get_session)):
+async def get_customer_locations(min_orders: int = Query(1, description="Minimum number of orders"), session: AsyncSession = Depends(get_session)):
     query = text("""
         SELECT 
             latitude, 
             longitude
         FROM 
-            customers;
+            customers c
+        JOIN (
+            SELECT customerID
+            FROM orders
+            GROUP BY customerID
+            HAVING COUNT(*) > :min_orders
+        ) o ON c.customerID = o.customerID;     
     """)
-    try:
-        result = await session.execute(query)
-        customer_locations = result.fetchall()
-
-        # Add logging
-        logging.info(f"Customer locations data: {customer_locations}")
-
-        # Convert the result to a list of dictionaries
-        customer_locations_list = [
-            {"latitude": row[0], "longitude": row[1]} for row in customer_locations
-        ]
-
-        logging.info(f"Formatted customer locations data: {customer_locations_list}")
-
-        return customer_locations_list
-    except Exception as e:
-        logging.error(f"Error fetching customer locations: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+    result = await session.execute(query, {"min_orders": min_orders})
+    customer_locations = result.fetchall()
+    return [{"latitude": loc[0], "longitude": loc[1]} for loc in customer_locations]
 
     # Store Locations
 @router.get("/store-locations")
