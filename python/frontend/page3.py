@@ -69,8 +69,12 @@ def main():
     if 'store_data' not in st.session_state:
         st.session_state.store_data = fetch_store_locations()
 
-    # Input for minimum number of orders
-    min_orders = st.number_input("Enter minimum number of orders:", min_value=0, step=1, value=0)
+        # Input for minimum number of orders
+    min_orders_input = st.text_input("Enter minimum number of orders (integer):")
+    try:
+        min_orders = int(min_orders_input)
+    except ValueError:
+        min_orders = 0
 
     # Fetch filtered customer data based on user input
     if min_orders > 0:
