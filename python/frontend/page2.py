@@ -20,10 +20,13 @@ def create_store_bar_chart(data, selected_store_ids):
 
     sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
 
+    # Define color palette for bars and lines
+    color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
+
     fig = go.Figure()
 
-    for store_id in sorted_store_ids:
-        marker_color = 'red' if store_id in selected_store_ids else 'blue'
+    for i, store_id in enumerate(sorted_store_ids):
+        marker_color = color_palette[i % len(color_palette)] if store_id in selected_store_ids else 'blue'
         fig.add_trace(go.Bar(
             x=[store_id],
             y=[total_revenue[store_id]],
@@ -44,10 +47,10 @@ def create_store_bar_chart(data, selected_store_ids):
     return fig
 
 # Function to create line chart for sales data of multiple stores
-def create_sales_line_chart(data, store_ids):
+def create_sales_line_chart(data, store_ids, color_palette):
     fig = go.Figure()
 
-    for store_id in store_ids:
+    for i, store_id in enumerate(store_ids):
         store_data = [item for item in data if item['storeid'] == store_id]
         if store_data:
             quarters = [f"{item['year']}-{item['quarter']}" for item in store_data]
@@ -57,7 +60,8 @@ def create_sales_line_chart(data, store_ids):
                 x=quarters,
                 y=number_of_sales,
                 mode='lines+markers',
-                name=f'Store {store_id}'
+                name=f'Store {store_id}',
+                line=dict(color=color_palette[i % len(color_palette)])
             ))
 
     fig.update_layout(title='Number of Sales for Selected Stores',
@@ -87,7 +91,7 @@ def main():
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
-            # Extract the store_ids from the x-coordinates
+            # Extract the store_id from the x-coordinate
             new_store_id = selected_points[0]['x']
             if new_store_id in st.session_state.selected_store_ids:
                 st.session_state.selected_store_ids.remove(new_store_id)
@@ -96,7 +100,9 @@ def main():
 
         if st.session_state.selected_store_ids:
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
-            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids)
+            # Define color_palette here
+            color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
+            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, color_palette=color_palette)
         else:
             sales_fig = create_empty_line_chart()
             st.warning("Select store IDs to see the number of sales for those stores")
