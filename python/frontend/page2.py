@@ -79,14 +79,21 @@ def main():
 
     sales_data = fetch_sales_data()
     if sales_data:
+        if 'selected_store_ids' not in st.session_state:
+            st.session_state.selected_store_ids = []
+
         fig = create_store_bar_chart(sales_data)
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
             # Extract the store_ids from the x-coordinates
-            selected_store_ids = [point['x'] for point in selected_points]
-            st.write(f"Selected Store IDs: {selected_store_ids}")  # Debugging Line
-            sales_fig = create_sales_line_chart(sales_data, selected_store_ids)
+            new_store_id = selected_points[0]['x']
+            if new_store_id not in st.session_state.selected_store_ids:
+                st.session_state.selected_store_ids.append(new_store_id)
+
+        if st.session_state.selected_store_ids:
+            st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
+            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids)
         else:
             sales_fig = create_empty_line_chart()
             st.warning("Select store IDs to see the number of sales for those stores")
@@ -94,4 +101,3 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=True)
     else:
         st.error("No sales data available.")
-
