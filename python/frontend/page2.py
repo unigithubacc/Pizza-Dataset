@@ -14,19 +14,16 @@ def fetch_sales_data():
         return []
 
 # Function to create bar chart for top-selling stores
-def create_store_bar_chart(data, selected_store_ids):
+def create_store_bar_chart(data, selected_store_ids, color_palette):
     store_ids = sorted(set([item['storeid'] for item in data]))
     total_revenue = {store_id: sum(item['number_of_sales'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
 
     sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
 
-    # Define color palette for bars and lines
-    color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
-
     fig = go.Figure()
 
     for i, store_id in enumerate(sorted_store_ids):
-        marker_color = color_palette[i % len(color_palette)] if store_id in selected_store_ids else 'blue'
+        marker_color = color_palette[selected_store_ids.index(store_id) % len(color_palette)] if store_id in selected_store_ids else 'blue'
         fig.add_trace(go.Bar(
             x=[store_id],
             y=[total_revenue[store_id]],
@@ -87,7 +84,10 @@ def main():
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
 
-        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids)
+        # Define color palette
+        color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
+
+        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
@@ -100,9 +100,7 @@ def main():
 
         if st.session_state.selected_store_ids:
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
-            # Define color_palette here
-            color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
-            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, color_palette=color_palette)
+            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, color_palette)
         else:
             sales_fig = create_empty_line_chart()
             st.warning("Select store IDs to see the number of sales for those stores")
@@ -110,3 +108,4 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=True)
     else:
         st.error("No sales data available.")
+
