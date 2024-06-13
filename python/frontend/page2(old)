@@ -15,7 +15,7 @@ def fetch_top_selling_stores():
 
 # Function to fetch sales data for a specific store
 def fetch_sales_by_store(store_id):
-    response = requests.get(f'http://127.0.0.1:8000/sales-report/')
+    response = requests.get(f'http://localhost:8000/sales-by-store/?storeid={store_id}')
     if response.status_code == 200:
         data = response.json()
         return data
@@ -72,15 +72,6 @@ def create_sales_line_chart(data, store_id):
 
     return fig
 
-# Function to create an empty line chart
-def create_empty_line_chart():
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='No data'))
-    fig.update_layout(title='Number of Sales for Store',
-                      xaxis_title='Year-Quarter',
-                      yaxis_title='Number of Sales')
-    return fig
-
 def main():
     st.title("Top Selling Stores")
 
@@ -88,7 +79,7 @@ def main():
     if stores_data:
         fig = create_store_bar_chart(stores_data)
         selected_points = plotly_events(fig, click_event=True)
-        
+
         if selected_points:
             # Extrahieren Sie den store_id aus der x-Koordinate
             selected_store_id = selected_points[0]['x']
@@ -96,12 +87,6 @@ def main():
             sales_data = fetch_sales_by_store(selected_store_id)
             if sales_data:
                 sales_fig = create_sales_line_chart(sales_data, selected_store_id)
-            else:
-                sales_fig = create_empty_line_chart()
+                st.plotly_chart(sales_fig, use_container_width=True)
         else:
-            sales_fig = create_empty_line_chart()
-            st.warning("Select a store ID to see the number of sales for that store")
-            
-        st.plotly_chart(sales_fig, use_container_width=True)
-    else:
-        st.error("No store data available.")
+            st.warning("select a store ID to see the number of sales for that store")
