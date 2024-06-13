@@ -148,6 +148,41 @@ async def get_sales_by_store(storeid: List[str] = Query(..., alias='storeid'), s
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+        
+@router.get("/sales-report/")
+async def get_sales_report(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            storeid,
+            EXTRACT(YEAR FROM orderdate) AS year,
+            CONCAT('Q', EXTRACT(QUARTER FROM orderdate)) AS quarter,
+            COUNT(orderid) AS number_of_sales
+        FROM 
+            orders
+        GROUP BY 
+            storeid,
+            EXTRACT(YEAR FROM orderdate),
+            EXTRACT(QUARTER FROM orderdate)
+        ORDER BY 
+            storeid,
+            year,
+            quarter;
+    """)
+    result = await session.execute(query)
+    sales_data = result.fetchall()
+
+    # Convert the list of tuples to a list of dictionaries
+    sales_data_dicts = [
+        {
+            "storeid": row[0],
+            "year": row[1],
+            "quarter": row[2],
+            "number_of_sales": row[3]
+        }
+        for row in sales_data
+    ]
+
+    return sales_data_dicts   
     
 @router.get("/revenue-by-store/{storeid}")
 async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_session)):
