@@ -98,6 +98,9 @@ def main():
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
 
+        # Update the bar chart with new colors
+        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
+
         if st.session_state.selected_store_ids:
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
             sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, color_palette)
@@ -108,4 +111,3 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=True)
     else:
         st.error("No sales data available.")
-
