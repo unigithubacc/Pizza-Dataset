@@ -1,10 +1,11 @@
 import logging
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, tuple_
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.expression import bindparam
 from typing import List, Optional
 from typing import AsyncGenerator
 from sqlalchemy import Column, Integer, String, Text, Double, Float, join
@@ -103,35 +104,50 @@ async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
             "TotalRevenue": store[7]
         } for store in stores
     ]
-    
-@router.get('/sales-by-store/{storeid}/')
-async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_session)):
-    query = text("""
-        SELECT 
-            EXTRACT(YEAR FROM orderdate) AS year,
-            CONCAT('Q', EXTRACT(QUARTER FROM orderdate)) AS quarter,
-            COUNT(orderid) AS number_of_sales
-        FROM 
-            orders
-        WHERE 
-            storeid = :storeid
-        GROUP BY 
-            EXTRACT(YEAR FROM orderdate),
-            EXTRACT(QUARTER FROM orderdate)
-        ORDER BY 
-            year,
-            quarter;
-    """)
-    result = await session.execute(query, {'storeid': storeid})
-    sales_data = result.fetchall()
-    return [
-        {
-            "year": sale[0],
-            "quarter": sale[1],
-            "number_of_sales": sale[2]
-        }
-        for sale in sales_data
-    ]
+
+@router.get('/sales-by-store/')
+async def get_sales_by_store(storeid: List[str] = Query(..., alias='storeid'), session: AsyncSession = Depends(get_session)):
+    try:
+        # Konvertiere die Liste von Strings in eine Liste von Tupeln
+        storeid_tuples = [(sid,) for sid in storeid]  # Jedes Tupel enthält nur ein Element
+        
+        query = text("""
+            SELECT 
+                storeid,
+                EXTRACT(YEAR FROM orderdate) AS year,
+                CONCAT('Q', EXTRACT(QUARTER FROM orderdate)) AS quarter,
+                COUNT(orderid) AS number_of_sales
+            FROM 
+                orders
+            WHERE 
+                storeid IN :store_ids
+            GROUP BY 
+                storeid,
+                EXTRACT(YEAR FROM orderdate),
+                EXTRACT(QUARTER FROM orderdate)
+            ORDER BY 
+                storeid,
+                year,
+                quarter;
+        """).bindparams(bindparam('store_ids', expanding=True))
+
+        result = await session.execute(query, {'store_ids': storeid_tuples})
+        sales_data = result.fetchall()
+        
+        if not sales_data:
+            raise HTTPException(status_code=404, detail="No sales data found for the specified stores.")
+        
+        return [
+            {
+                "storeid": sale[0],
+                "year": sale[1],
+                "quarter": sale[2],
+                "number_of_sales": sale[3]
+            }
+            for sale in sales_data
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 @router.get("/revenue-by-store/{storeid}")
 async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_session)):
