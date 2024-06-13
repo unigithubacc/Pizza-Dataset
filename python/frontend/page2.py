@@ -14,7 +14,7 @@ def fetch_sales_data():
         return []
 
 # Function to create bar chart for top-selling stores
-def create_store_bar_chart(data):
+def create_store_bar_chart(data, selected_store_ids):
     store_ids = sorted(set([item['storeid'] for item in data]))
     total_revenue = {store_id: sum(item['number_of_sales'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
 
@@ -23,13 +23,14 @@ def create_store_bar_chart(data):
     fig = go.Figure()
 
     for store_id in sorted_store_ids:
+        marker_color = 'red' if store_id in selected_store_ids else 'blue'
         fig.add_trace(go.Bar(
             x=[store_id],
             y=[total_revenue[store_id]],
             name=f'Store {store_id}',
             legendgroup=f'Store {store_id}',
             showlegend=True,
-            marker_color='blue',
+            marker_color=marker_color,
             customdata=[store_id],
             hoverinfo='x+y'
         ))
@@ -82,13 +83,15 @@ def main():
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
 
-        fig = create_store_bar_chart(sales_data)
+        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids)
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
             # Extract the store_ids from the x-coordinates
             new_store_id = selected_points[0]['x']
-            if new_store_id not in st.session_state.selected_store_ids:
+            if new_store_id in st.session_state.selected_store_ids:
+                st.session_state.selected_store_ids.remove(new_store_id)
+            else:
                 st.session_state.selected_store_ids.append(new_store_id)
 
         if st.session_state.selected_store_ids:
