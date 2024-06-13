@@ -15,7 +15,7 @@ def fetch_top_selling_stores():
 
 # Function to fetch sales data for a specific store
 def fetch_sales_by_store(store_id):
-    response = requests.get(f'http://localhost:8000/sales-by-store/{store_id}/')
+    response = requests.get(f'http://localhost:8000/sales-by-store/?storeid={store_id}')
     if response.status_code == 200:
         data = response.json()
         return data
