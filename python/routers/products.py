@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from sqlalchemy import select
 from pydantic import BaseModel
+from typing import Optional
 
 
 
@@ -46,7 +47,12 @@ async def get_top_selling_products(session: AsyncSession = Depends(get_session))
     return [{"name": product[0], "size": product[1], "TotalSold": product[2]} for product in products]
 
 @router.get("/sales-distribution")
-async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[str] = None, session: AsyncSession = Depends(get_session)):
+async def get_sales_distribution(
+    year: Optional[int] = None, 
+    quarter: Optional[str] = None, 
+    month: Optional[int] = None, 
+    session: AsyncSession = Depends(get_session)
+):
     base_query = """
         SELECT 
             p.Category, 
@@ -75,6 +81,14 @@ async def get_sales_distribution(year: Optional[int] = None, quarter: Optional[s
             filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
         elif quarter == "Q4":
             filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
+
+    if month is not None:
+        year_from_month = 2020 + (month - 1) // 12  # Calculate year based on month slider value
+        month_in_year = (month - 1) % 12 + 1  # Calculate actual month within the year
+        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year_from_month")
+        filters.append("EXTRACT(MONTH FROM o.OrderDate) = :month_in_year")
+        params["year_from_month"] = year_from_month
+        params["month_in_year"] = month_in_year
 
     if filters:
         base_query += " WHERE " + " AND ".join(filters)

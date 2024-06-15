@@ -1,10 +1,10 @@
 import streamlit as st
 import plotly.graph_objects as go
 import requests
-from collections import defaultdict
+from datetime import datetime
 
-
-def fetch_sales_distribution(year=None, quarter=None):
+# Fetch sales distribution
+def fetch_sales_distribution(year=None, quarter=None, month=None):
     try:
         url = 'http://localhost:8000/sales-distribution'
         params = {}
@@ -12,6 +12,8 @@ def fetch_sales_distribution(year=None, quarter=None):
             params['year'] = year
         if quarter and quarter != "All":
             params['quarter'] = quarter
+        if month:
+            params['month'] = month
         
         response = requests.get(url, params=params)  
         response.raise_for_status()  
@@ -20,6 +22,7 @@ def fetch_sales_distribution(year=None, quarter=None):
         st.error(f"Error fetching data: {e}")
         return []
 
+# Create pie chart
 def create_pie_chart(data):
     categories = [item['category'] for item in data]
     total_sales = [item['total_sold'] for item in data]
@@ -40,16 +43,41 @@ def create_pie_chart(data):
     
     return fig
 
+def convert_month_slider_value(month_slider_value):
+    # Calculate the year and month based on the slider value
+    base_year = 2020
+    year = base_year + (month_slider_value - 1) // 12
+    month = (month_slider_value - 1) % 12 + 1
+    # Format month name and year
+    month_name = datetime(year, month, 1).strftime('%b')
+    return f"{month_name}. {year}", year, month
+
 def main():
     st.title("Sales Distribution by Product Category")
     
-    # Dropdown menu for selecting years including "All"
-    selected_year = st.selectbox("Select year", ["All", 2020, 2021, 2022], index=0)
+    # Radio button to select filter mode
+    filter_mode = st.radio("Select filter mode", ["Year and Quarter", "Month"])
     
-    # Dropdown menu for selecting quarters including "All"
-    selected_quarter = st.selectbox("Select quarter", ["All", "Q1", "Q2", "Q3", "Q4"], index=0)
-
-    sales_data = fetch_sales_distribution(selected_year, selected_quarter)
+    if filter_mode == "Year and Quarter":
+        # Dropdown menu for selecting years including "All"
+        selected_year = st.selectbox("Select year", ["All", 2020, 2021, 2022], index=0)
+        
+        # Dropdown menu for selecting quarters including "All"
+        selected_quarter = st.selectbox("Select quarter", ["All", "Q1", "Q2", "Q3", "Q4"], index=0)
+        
+        # Fetch filtered sales data based on the selected year and quarter
+        st.write(f"Fetching data for year: {selected_year} and quarter: {selected_quarter}")
+        sales_data = fetch_sales_distribution(year=selected_year, quarter=selected_quarter)
+    
+    else:
+        # Slider for selecting month
+        selected_month = st.slider("Select month (1 = Jan 2020, 36 = Dec 2022)", min_value=1, max_value=36, value=1)
+        readable_month, year, month = convert_month_slider_value(selected_month)
+        
+        # Fetch filtered sales data based on the selected month
+        st.write(f"Fetching data for {readable_month}")
+        sales_data = fetch_sales_distribution(month=selected_month)
+    
     if sales_data:
         fig = create_pie_chart(sales_data)
         st.plotly_chart(fig)
@@ -57,3 +85,6 @@ def main():
         # Display the list of categories and their sales figures
         st.subheader("List of categories and their sales figures:")
         st.table(sales_data)
+
+if __name__ == "__main__":
+    main()
