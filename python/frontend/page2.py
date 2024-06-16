@@ -39,7 +39,9 @@ def create_store_bar_chart(data, selected_store_ids, color_palette):
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
                       yaxis_title='Total Sales',
-                      clickmode='event+select')
+                      clickmode='event+select',
+                      width=1200,  # Setzt die Breite auf 600px
+                      height=400)  # Setzt die Höhe auf 400px
 
     return fig
 
