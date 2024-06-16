@@ -79,7 +79,11 @@ def create_empty_line_chart():
 def main():
     st.title("Top Selling Stores")
 
-    sales_data = fetch_sales_data()
+    # Check if sales data is already in session_state
+    if 'sales_data' not in st.session_state:
+        st.session_state.sales_data = fetch_sales_data()
+
+    sales_data = st.session_state.sales_data
     if sales_data:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
@@ -111,3 +115,4 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=True)
     else:
         st.error("No sales data available.")
+
