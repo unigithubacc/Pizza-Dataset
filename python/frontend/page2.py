@@ -40,7 +40,7 @@ def create_store_bar_chart(data, selected_store_ids, color_palette):
                       xaxis_title='Store ID',
                       yaxis_title='Total Sales',
                       clickmode='event+select',
-                      width=1200,  # Setzt die Breite auf 600px
+                      width=800,  # Setzt die Breite auf 600px
                       height=400)  # Setzt die Höhe auf 400px
 
     return fig
@@ -65,7 +65,10 @@ def create_sales_line_chart(data, store_ids, color_palette):
 
     fig.update_layout(title='Number of Sales for Selected Stores',
                       xaxis_title='Year-Quarter',
-                      yaxis_title='Number of Sales')
+                      yaxis_title='Number of Sales',
+                      width=800,  # Setzt die Breite des Diagramms auf 600 Pixel
+                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel
+)
 
     return fig
 
@@ -75,7 +78,10 @@ def create_empty_line_chart():
     fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='No data'))
     fig.update_layout(title='Number of Sales for Store',
                       xaxis_title='Year-Quarter',
-                      yaxis_title='Number of Sales')
+                      yaxis_title='Number of Sales',
+                      width=800,  # Setzt die Breite des Diagramms auf 600 Pixel
+                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel'
+                     )
     return fig
 
 def main():
@@ -115,7 +121,7 @@ def main():
             sales_fig = create_empty_line_chart()
             st.warning("Select store IDs to see the number of sales for those stores")
             
-        st.plotly_chart(sales_fig, use_container_width=True)
+        st.plotly_chart(sales_fig, use_container_width=False)
     else:
         st.error("No sales data available.")
 
