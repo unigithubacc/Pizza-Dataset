@@ -89,7 +89,7 @@ def main():
             st.session_state.selected_store_ids = []
 
         # Define color palette
-        color_palette = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666']
+        color_palette = ['#4daf4a', '#377eb8', '#e41a1c', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']
 
         fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
         selected_points = plotly_events(fig, click_event=True)
@@ -101,6 +101,7 @@ def main():
                 st.session_state.selected_store_ids.remove(new_store_id)
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
+            st.experimental_rerun()
 
         # Update the bar chart with new colors
         fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
