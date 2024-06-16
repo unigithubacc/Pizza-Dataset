@@ -44,7 +44,10 @@ def create_stacked_barchart(data):
                       title='Sales figures for various pizzas by size',
                       xaxis_tickangle=-45,
                       xaxis_title='Pizza Name',
-                      yaxis_title='Total Sold')
+                      yaxis_title='Total Sold',
+                      width=800,  # Setzt die Breite des Diagramms auf 600 Pixel
+                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel'
+                     )
 
     return fig
 

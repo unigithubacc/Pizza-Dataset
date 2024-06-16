@@ -85,7 +85,6 @@ def create_empty_line_chart():
     return fig
 
 def main():
-    st.title("Top Selling Stores")
 
     # Check if sales data is already in session_state
     if 'sales_data' not in st.session_state:
