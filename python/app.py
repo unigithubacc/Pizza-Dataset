@@ -5,6 +5,10 @@ from frontend.page3 import main as page3_main
 from frontend.page4 import main as page4_main
 from frontend.page5 import main as page5_main
 from frontend.page6 import main as page6_main
+from navigation import render_navbar, close_navbar, load_css
+
+
+st.set_page_config(layout="wide")  # Setzen Sie hier das Layout auf "wide"
 
 # Lade die CSS-Datei
 def load_css(file_name):
@@ -39,6 +43,11 @@ else:
 # Setze URL-Parameter basierend auf der Auswahl in der Sidebar
 st.query_params.page = selection
 
+# Navigation rendern und Auswahl speichern
+render_navbar("Pizza shop analysis tool", list(PAGES.keys()), selection)
+
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]
 page()
+
+close_navbar()

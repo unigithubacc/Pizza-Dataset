@@ -1,42 +1,42 @@
-/* style.css */
-
 body {
-    background-color: #ffffff; /* Weißer Hintergrund */
-    color: #333333; /* Dunkle Schriftfarbe für guten Kontrast */
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: Arial, sans-serif;
 }
 
-.sidebar .sidebar-content {
-    background-color: #f0f8ff; /* Sehr helles Blau für die Seitenleiste */
-    color: #333333; /* Dunkle Schriftfarbe für die Seitenleiste */
+.navbar {
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
 }
 
-.sidebar .sidebar-content a {
-    color: #333333; /* Dunkle Linkfarbe in der Seitenleiste */
+.navbar a {
+    float: left;
+    display: block;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
 }
 
-.sidebar .sidebar-content a:hover {
-    color: #5dade2; /* Hellere Linkfarbe beim Hover */
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    color: #ffffff; /* Dunkles Grau-Blau für Überschriften */
-}
-
-.stButton button {
-    background-color: #e3eaee; /* Helles Blau für Buttons */
+.navbar a.active {
+    background-color: #04AA6D;
     color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
 }
 
-.stButton button:hover {
-    background-color: #85e9dc; /* Noch helleres Blau beim Hover */
+.content {
+    padding: 16px;
+    margin-top: 60px;
 }
 
-.stSelectbox .stSelectboxContent {
-    background-color: #f7fbff; /* Sehr helles Blau für das Selectbox-Feld */
-    color: #333333; /* Dunkle Schriftfarbe für das Selectbox-Feld */
+hr {
+    border: 1px solid #333;
+    width: 100%;
+    margin: 20px 0;
 }
