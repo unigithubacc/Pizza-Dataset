@@ -101,7 +101,7 @@ def main():
                 st.session_state.selected_store_ids.remove(new_store_id)
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
-            st.experimental_rerun()
+            st.rerun()
 
         # Update the bar chart with new colors
         fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
