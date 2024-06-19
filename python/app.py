@@ -5,15 +5,46 @@ from frontend.page3 import main as page3_main
 from frontend.page4 import main as page4_main
 from frontend.page5 import main as page5_main
 from frontend.page6 import main as page6_main
-from navigation import render_navbar, close_navbar, load_css
-
+from navigation import render_navbar, close_navbar
 
 st.set_page_config(layout="wide")  # Setzen Sie hier das Layout auf "wide"
 
 # Lade die CSS-Datei
-def load_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+def load_css():
+    css = """
+    <style>
+    .sidebar .sidebar-content {
+        padding: 0;
+    }
+    .sidebar .sidebar-content .block-container {
+        padding: 0;
+    }
+    .sidebar .element-container {
+        margin: 0 !important;
+    }
+    .nav-button {
+        width: 100%;
+        height: 50px;
+        text-align: left;
+        padding: 10px;
+        margin: 0;
+        border: none;
+        background: #f0f2f6;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .nav-button:hover {
+        background: #e0e2e6;
+    }
+    .nav-icon {
+        width: 20px;
+        margin-right: 10px;
+    }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
 
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
@@ -25,20 +56,34 @@ PAGES = {
     "page 6": page6_main
 }
 
-# CSS-Datei laden
-load_css("frontend/style.css")
+# Icons für die Seiten
+ICONS = {
+    "Products": "🛒",
+    "Store": "🏪",
+    "Customers": "👥",
+    "Dynamische Datenfilterung": "📊",
+    "Seite 5": "📄",
+    "page 6": "🔧"
+}
+
+# CSS laden
+load_css()
 
 # URL-Parameter auslesen
 page_param = st.query_params.get('page', 'Products')
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
-# Überprüfen, ob der gesuchte Schlüssel im Wörterbuch vorhanden ist
-if page_param in PAGES.keys():
-    selection = st.sidebar.selectbox("Select page", list(PAGES.keys()), index=list(PAGES.keys()).index(page_param))
-else:
-    # Wenn der Schlüssel nicht gefunden wird, wählen wir einen Standardwert
-    selection = st.sidebar.selectbox("Select page", list(PAGES.keys()))
+
+# Füge Buttons für jede Seite hinzu und speichere die Auswahl
+selection = None
+for page in PAGES.keys():
+    if st.sidebar.button(f"{ICONS[page]} {page}", key=page, help=page, use_container_width=True):
+        selection = page
+
+# Wenn keine Seite ausgewählt wurde, wähle die Standardseite
+if not selection:
+    selection = page_param if page_param in PAGES else 'Products'
 
 # Setze URL-Parameter basierend auf der Auswahl in der Sidebar
 st.query_params.page = selection
