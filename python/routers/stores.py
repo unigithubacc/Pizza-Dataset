@@ -221,7 +221,8 @@ async def get_repeat_customers_report(session: AsyncSession = Depends(get_sessio
     query = text("""
         SELECT 
             s.storeid,
-            ROUND((COUNT(DISTINCT CASE WHEN sub.order_count > 1 THEN o.customerid END) * 1.0 / COUNT(DISTINCT o.customerid)) * 100, 2) AS repeat_rate
+            ROUND((COUNT(DISTINCT CASE WHEN sub.order_count > 1 THEN o.customerid END) * 1.0 / COUNT(DISTINCT o.customerid)) * 100, 2) AS repeat_rate,
+            COUNT(DISTINCT o.customerid) AS total_customers
         FROM 
             stores s
         JOIN 
@@ -248,7 +249,8 @@ async def get_repeat_customers_report(session: AsyncSession = Depends(get_sessio
     report_data_dicts = [
         {
             "storeid": row[0],
-            "repeat_rate": row[1]
+            "repeat_rate": row[1],
+            "total_customers": row[2]
         }
         for row in report_data
     ]

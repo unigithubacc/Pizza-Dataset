@@ -26,9 +26,8 @@ def main():
         df = pd.DataFrame(data)
         
         # Heatmap erstellen
-        fig = px.density_heatmap(df, x="storeid", y="repeat_rate", color_continuous_scale="Viridis", 
-                                labels={"repeat_rate": "% Repeat Rate"})
-
+        fig = px.density_heatmap(df, x="storeid", y="total_customers", z="repeat_rate", color_continuous_scale="Viridis", 
+                                labels={"total_customers": "Total Customers", "repeat_rate": "% Repeat Rate", "storeid": "Store ID"})
         
         # Die Heatmap im Streamlit-Bericht anzeigen
         st.plotly_chart(fig)
