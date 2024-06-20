@@ -22,8 +22,8 @@ def main():
     if data:
         df = pd.DataFrame(data)
 
-        bins = [0, 400, 800, 1000, 1200, 1400]
-        labels = ['0-400', '400-800', '800-1000', '1000-1200', '1200-1400']
+        bins = [0, 400, 600, 800, 1000, 1200, 1400]
+        labels = ['0-400', '400-600', '600-800', '800-1000', '1000-1200', '1200-1400']
         df['customer_range'] = pd.cut(df['total_customers'], bins=bins, labels=labels)
 
         # Ensure all possible values are handled
@@ -37,9 +37,12 @@ def main():
                 # Concatenate the original DataFrame with the temporary DataFrame
                 df = pd.concat([df, temp_df], ignore_index=True)
 
+        # Reverse the order of labels for the y-axis
+        labels_reversed = labels[::-1]
+
         z_values = np.full((len(labels), len(df['storeid'].unique())), np.nan)
 
-        range_index_map = {label: idx for idx, label in enumerate(labels)}
+        range_index_map = {label: idx for idx, label in enumerate(labels_reversed)}
 
         for i, store in enumerate(df['storeid'].unique()):
             store_data = df[df['storeid'] == store]
@@ -56,7 +59,7 @@ def main():
         fig = px.imshow(z_values,
                         labels=dict(x="Store ID", y="Total Customers", color="% Repeat Rate"),
                         x=df['storeid'].unique(),
-                        y=labels,
+                        y=labels_reversed,
                         color_continuous_scale="Viridis")
 
         st.plotly_chart(fig)
