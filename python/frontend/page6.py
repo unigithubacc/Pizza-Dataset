@@ -1,29 +1,35 @@
+import pandas as pd
 import streamlit as st
 import plotly.express as px
 import requests
 
-# Funktion zum Abrufen der wiederkehrenden Kundenberichte
-def fetch_repeat_customers_report():
-    url = "http://localhost:8000/repeat-customers-report/"
+# Funktion zum Abrufen der Daten vom API-Endpunkt
+def fetch_data():
+    url = "http://localhost:8000/repeat-customers-report/"  # Passen Sie die URL entsprechend Ihrer API-Konfiguration an
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
     else:
-        st.error(f"Failed to fetch data: {response.status_code}")
+        st.error("Fehler beim Abrufen der Daten")
         return []
 
+# Hauptfunktion
 def main():
-    st.write("Welcome to the Products page!")
-    st.write("Here you can find information about our products.")
+    st.write("Willkommen zur Kundenreport-Seite!")
+    st.write("Hier finden Sie Informationen über unsere wiederkehrenden Kunden.")
 
     # Daten abrufen
-    report_data = fetch_repeat_customers_report()
-
-    # Überprüfen, ob Daten erfolgreich abgerufen wurden
-    if report_data:
-        # Diagramm erstellen
-        fig = px.bar(report_data, x="storeid", y=["total_customers", "repeat_customers"], labels={"value": "Count"},
-                     title='Repeat Customers Report', barmode='group')
+    data = fetch_data()
+    
+    if data:
+        # Daten für die Heatmap vorbereiten
+        df = pd.DataFrame(data)
         
-        # Diagramm anzeigen
+        # Heatmap erstellen
+        fig = px.density_heatmap(df, x="storeid", y="repeat_rate", color_continuous_scale="Viridis", 
+                                labels={"repeat_rate": "% Repeat Rate"})
+
+        
+        # Die Heatmap im Streamlit-Bericht anzeigen
         st.plotly_chart(fig)
+
