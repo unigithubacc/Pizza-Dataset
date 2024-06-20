@@ -216,6 +216,49 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
         for sale in sales_data
     ]    
 
+@router.get("/repeat-customers-report/")
+async def get_repeat_customers_report(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            s.storeid,
+            COUNT(DISTINCT o.customerid) AS total_customers,
+            COUNT(DISTINCT CASE WHEN sub.order_count > 1 THEN o.customerid END) AS repeat_customers,
+            ROUND((COUNT(DISTINCT CASE WHEN sub.order_count > 1 THEN o.customerid END) * 1.0 / COUNT(DISTINCT o.customerid)) * 100, 2) AS repeat_rate
+        FROM 
+            stores s
+        JOIN 
+            orders o ON s.storeid = o.storeid
+        JOIN 
+            (SELECT 
+                 customerid, 
+                 COUNT(orderid) AS order_count 
+             FROM 
+                 orders 
+             GROUP BY 
+                 customerid) sub 
+        ON 
+            o.customerid = sub.customerid
+        GROUP BY 
+            s.storeid
+        ORDER BY 
+            repeat_rate DESC;
+    """)
+    result = await session.execute(query)
+    report_data = result.fetchall()
+
+    # Konvertieren Sie das Ergebnis in eine Liste von Wörterbüchern
+    report_data_dicts = [
+        {
+            "storeid": row[0],
+            "total_customers": row[1],
+            "repeat_customers": row[2],
+            "repeat_rate": row[3]
+        }
+        for row in report_data
+    ]
+
+    return report_data_dicts
+
 @router.get('/stores')
 def read_root():
     return {"Hello": "World123"}
