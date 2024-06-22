@@ -79,6 +79,7 @@ ICONS = {
     "Products": "🛒",
     "Store": "🏪",
     "Store/Page 6": "🔧",
+    "Store/Page 7": "🔧",
     "Customers": "👥",
     "Dynamische Datenfilterung": "📊",
     "Seite 5": "📄"
@@ -98,10 +99,9 @@ selection = None
 
 # Hauptseiten
 main_pages = ["Products", "Store", "Customers", "Dynamische Datenfilterung", "Seite 5"]
-store_expanded = st.sidebar.expander("🏪 Store", expanded=page_param.startswith("Store"))
-
 for page in main_pages:
     if page == "Store":
+        store_expanded = st.sidebar.expander("🏪 Store", expanded=page_param.startswith("Store"))
         with store_expanded:
             if st.button("🔧 Page 6", key="Store/Page 6", help="Store/Page 6", use_container_width=True):
                 selection = "Store/Page 6"
