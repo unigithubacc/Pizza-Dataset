@@ -97,7 +97,7 @@ def main():
             st.session_state.selected_store_colors = []
 
         # Define color palette
-        color_palette = ['#4daf4a', '#377eb8', '#e41a1c', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']
+        color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
         default_color = 'blue'
 
         fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
