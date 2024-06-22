@@ -217,11 +217,14 @@ async def get_sales_by_store(storeid: str, session: AsyncSession = Depends(get_s
     ]    
 
 @router.get("/repeat-customers-report/")
-async def get_repeat_customers_report(session: AsyncSession = Depends(get_session)):
-    query = text("""
+async def get_repeat_customers_report(
+    min_order_count: int = Query(1, alias="min_order_count"),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text(f"""
         SELECT 
             s.storeid,
-            ROUND((COUNT(DISTINCT CASE WHEN sub.order_count > 1 THEN o.customerid END) * 1.0 / COUNT(DISTINCT o.customerid)) * 100, 2) AS repeat_rate,
+            ROUND((COUNT(DISTINCT CASE WHEN sub.order_count > :min_order_count THEN o.customerid END) * 1.0 / COUNT(DISTINCT o.customerid)) * 100, 2) AS repeat_rate,
             COUNT(DISTINCT o.customerid) AS total_customers
         FROM 
             stores s
@@ -242,7 +245,8 @@ async def get_repeat_customers_report(session: AsyncSession = Depends(get_sessio
         ORDER BY 
             repeat_rate DESC;
     """)
-    result = await session.execute(query)
+    
+    result = await session.execute(query, {'min_order_count': min_order_count})
     report_data = result.fetchall()
 
     # Konvertieren Sie das Ergebnis in eine Liste von Wörterbüchern

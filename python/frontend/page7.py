@@ -4,8 +4,8 @@ import plotly.express as px
 import numpy as np
 import requests
 
-def fetch_data():
-    url = "http://localhost:8000/repeat-customers-report/"
+def fetch_data(min_order_count):
+    url = f"http://localhost:8000/repeat-customers-report/?min_order_count={min_order_count}"
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -17,7 +17,11 @@ def main():
     st.write("Willkommen zur Kundenreport-Seite!")
     st.write("Hier finden Sie Informationen über unsere wiederkehrenden Kunden.")
 
-    data = fetch_data()
+    # Füge ein Eingabefeld für min_order_count hinzu
+    min_order_count = st.number_input("Geben Sie die Mindestanzahl der Bestellungen ein:", min_value=0, value=1)
+
+    # Daten abrufen mit dem angegebenen min_order_count
+    data = fetch_data(min_order_count)
 
     if data:
         df = pd.DataFrame(data)
