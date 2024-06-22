@@ -14,7 +14,7 @@ def fetch_sales_data():
         return []
 
 # Function to create bar chart for top-selling stores
-def create_store_bar_chart(data, selected_store_ids, color_palette):
+def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color):
     store_ids = sorted(set([item['storeid'] for item in data]))
     total_revenue = {store_id: sum(item['number_of_sales'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
 
@@ -22,8 +22,8 @@ def create_store_bar_chart(data, selected_store_ids, color_palette):
 
     fig = go.Figure()
 
-    for i, store_id in enumerate(sorted_store_ids):
-        marker_color = color_palette[selected_store_ids.index(store_id) % len(color_palette)] if store_id in selected_store_ids else 'blue'
+    for store_id in sorted_store_ids:
+        marker_color = selected_store_colors[selected_store_ids.index(store_id)] if store_id in selected_store_ids else default_color
         fig.add_trace(go.Bar(
             x=[store_id],
             y=[total_revenue[store_id]],
@@ -40,13 +40,13 @@ def create_store_bar_chart(data, selected_store_ids, color_palette):
                       xaxis_title='Store ID',
                       yaxis_title='Total Sales',
                       clickmode='event+select',
-                      width=800,  # Setzt die Breite auf 600px
+                      width=800,  # Setzt die Breite auf 800px
                       height=400)  # Setzt die Höhe auf 400px
 
     return fig
 
 # Function to create line chart for sales data of multiple stores
-def create_sales_line_chart(data, store_ids, color_palette):
+def create_sales_line_chart(data, store_ids, store_colors):
     fig = go.Figure()
 
     for i, store_id in enumerate(store_ids):
@@ -60,15 +60,15 @@ def create_sales_line_chart(data, store_ids, color_palette):
                 y=number_of_sales,
                 mode='lines+markers',
                 name=f'Store {store_id}',
-                line=dict(color=color_palette[i % len(color_palette)])
+                line=dict(color=store_colors[i])
             ))
 
     fig.update_layout(title='Number of Sales for Selected Stores',
                       xaxis_title='Year-Quarter',
                       yaxis_title='Number of Sales',
-                      width=800,  # Setzt die Breite des Diagramms auf 600 Pixel
+                      width=800,  # Setzt die Breite des Diagramms auf 800 Pixel
                       height=400  # Setzt die Höhe des Diagramms auf 400 Pixel
-)
+    )
 
     return fig
 
@@ -79,9 +79,9 @@ def create_empty_line_chart():
     fig.update_layout(title='Number of Sales for Store',
                       xaxis_title='Year-Quarter',
                       yaxis_title='Number of Sales',
-                      width=800,  # Setzt die Breite des Diagramms auf 600 Pixel
-                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel'
-                     )
+                      width=800,  # Setzt die Breite des Diagramms auf 800 Pixel
+                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel
+    )
     return fig
 
 def main():
@@ -94,28 +94,33 @@ def main():
     if sales_data:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
+            st.session_state.selected_store_colors = []
 
         # Define color palette
         color_palette = ['#4daf4a', '#377eb8', '#e41a1c', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']
+        default_color = 'blue'
 
-        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
+        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
             # Extract the store_id from the x-coordinate
             new_store_id = selected_points[0]['x']
             if new_store_id in st.session_state.selected_store_ids:
-                st.session_state.selected_store_ids.remove(new_store_id)
+                index = st.session_state.selected_store_ids.index(new_store_id)
+                st.session_state.selected_store_ids.pop(index)
+                st.session_state.selected_store_colors.pop(index)
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
+                st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
             st.rerun()
 
         # Update the bar chart with new colors
-        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, color_palette)
+        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
 
         if st.session_state.selected_store_ids:
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
-            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, color_palette)
+            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
         else:
             sales_fig = create_empty_line_chart()
             st.warning("Select store IDs to see the number of sales for those stores")
