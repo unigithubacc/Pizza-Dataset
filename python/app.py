@@ -5,6 +5,7 @@ from frontend.page3 import main as page3_main
 from frontend.page4 import main as page4_main
 from frontend.page5 import main as page5_main
 from frontend.page6 import main as page6_main
+from frontend.page7 import main as page7_main
 from navigation import render_navbar, close_navbar
 
 st.set_page_config(layout="wide")  # Setzen Sie hier das Layout auf "wide"
@@ -42,6 +43,22 @@ def load_css():
         width: 20px;
         margin-right: 10px;
     }
+    .subpage-button {
+        width: 100%;
+        height: 40px;
+        text-align: left;
+        padding: 8px 20px;
+        margin: 0;
+        border: none;
+        background: #f7f8fa;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .subpage-button:hover {
+        background: #e9ecef;
+    }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -50,20 +67,21 @@ def load_css():
 PAGES = {
     "Products": page1_main,
     "Store": page2_main,
+    "Store/Page 6": page6_main,
+    "Store/Page 7": page7_main,
     "Customers": page3_main,
     "Dynamische Datenfilterung": page4_main,
     "Seite 5": page5_main,
-    "page 6": page6_main
 }
 
 # Icons für die Seiten
 ICONS = {
     "Products": "🛒",
     "Store": "🏪",
+    "Store/Page 6": "🔧",
     "Customers": "👥",
     "Dynamische Datenfilterung": "📊",
-    "Seite 5": "📄",
-    "page 6": "🔧"
+    "Seite 5": "📄"
 }
 
 # CSS laden
@@ -77,9 +95,21 @@ st.sidebar.title("Navigation")
 
 # Füge Buttons für jede Seite hinzu und speichere die Auswahl
 selection = None
-for page in PAGES.keys():
-    if st.sidebar.button(f"{ICONS[page]} {page}", key=page, help=page, use_container_width=True):
-        selection = page
+
+# Hauptseiten
+main_pages = ["Products", "Store", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+store_expanded = st.sidebar.expander("🏪 Store", expanded=page_param.startswith("Store"))
+
+for page in main_pages:
+    if page == "Store":
+        with store_expanded:
+            if st.button("🔧 Page 6", key="Store/Page 6", help="Store/Page 6", use_container_width=True):
+                selection = "Store/Page 6"
+            if st.button("🔧 Page 7", key="Store/Page 7", help="Store/Page 7", use_container_width=True):
+                selection = "Store/Page 7"
+    else:
+        if st.sidebar.button(f"{ICONS[page]} {page}", key=page, help=page, use_container_width=True):
+            selection = page
 
 # Wenn keine Seite ausgewählt wurde, wähle die Standardseite
 if not selection:
