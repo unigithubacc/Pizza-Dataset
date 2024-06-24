@@ -18,7 +18,7 @@ def main():
     st.write("Hier finden Sie Informationen über unsere wiederkehrenden Kunden.")
 
     # Füge ein Eingabefeld für min_order_count hinzu
-    min_order_count = st.number_input("Geben Sie die Mindestanzahl der Bestellungen ein:", min_value=0, value=1)
+    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=0, value=1)
 
     # Daten abrufen mit dem angegebenen min_order_count
     data = fetch_data(min_order_count)
