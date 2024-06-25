@@ -277,6 +277,8 @@ async def get_sales_data(
                         ELSE 'quarter'
                     END, orderdate
                 ) AS period_date,
+                EXTRACT(YEAR FROM orderdate) AS year,
+                EXTRACT(QUARTER FROM orderdate) AS quarter,
                 COUNT(orderid) AS number_of_sales
             FROM 
                 orders
@@ -285,10 +287,10 @@ async def get_sales_data(
                                 WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '12 DAYS' 
                                 WHEN :period = 'Week' THEN DATE '2022-12-31' - INTERVAL '12 WEEKS'
                                 WHEN :period = 'Month' THEN DATE '2022-12-31' - INTERVAL '12 MONTHS'
-                                ELSE '1900-01-01' -- Set a default past date for Quarter (or other cases)
+                                ELSE '1900-01-01'
                             END
             GROUP BY 
-                storeid, period_date
+                storeid, period_date, year, quarter
         )
         SELECT
             storeid,
@@ -296,7 +298,7 @@ async def get_sales_data(
                 WHEN :period = 'Day' THEN TO_CHAR(period_date, 'YYYY-MM-DD')
                 WHEN :period = 'Week' THEN TO_CHAR(period_date, 'IYYY-IW')
                 WHEN :period = 'Month' THEN TO_CHAR(period_date, 'YYYY-MM')
-                ELSE TO_CHAR(period_date, 'IYYY-"Q"Q')
+                ELSE TO_CHAR(year, '0000') || '-Q' || quarter
             END AS period,
             SUM(number_of_sales) AS total_sales
         FROM
