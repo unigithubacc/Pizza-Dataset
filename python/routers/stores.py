@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from sqlalchemy import select
 from pydantic import BaseModel
+from datetime import date
 
 
 
@@ -74,17 +75,22 @@ async def read_stores(filter: Optional[str] = Query(None, title="Filter", descri
     return [StoreModel.from_orm(store) for store in stores]
 
 @router.get("/top-selling-stores")
-async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
+async def get_top_selling_stores(
+    start_date: date = date(2019, 12, 31),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
     query = text("""
         SELECT
             stores.storeID,
             SUM(orders.total) AS TotalRevenue
         FROM public.stores
         INNER JOIN public.orders ON stores.storeID = orders.storeID
+        WHERE orders.orderdate BETWEEN :start_date AND :end_date
         GROUP BY stores.storeID
         ORDER BY TotalRevenue DESC;
     """)
-    result = await session.execute(query)
+    result = await session.execute(query, {"start_date": start_date, "end_date": end_date})
     stores = result.fetchall()
     return [
         {

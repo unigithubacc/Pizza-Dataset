@@ -2,10 +2,11 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
+from datetime import date
 
-# Function to fetch top-selling stores data
-def fetch_top_selling_stores():
-    response = requests.get('http://localhost:8000/top-selling-stores')
+# Funktion zum Abrufen der Top-Selling-Stores-Daten
+def fetch_top_selling_stores(start_date, end_date):
+    response = requests.get(f'http://localhost:8000/top-selling-stores?start_date={start_date}&end_date={end_date}')
     if response.status_code == 200:
         data = response.json()
         return data
@@ -95,12 +96,15 @@ def create_empty_line_chart():
     return fig
 
 def main():
+     # Datumseingabe
+    start_date = st.sidebar.date_input("Start Date", value=date(2019, 12, 31))
+    end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Check if top-selling stores data is already in session_state
     if 'top_selling_stores' not in st.session_state:
-        st.session_state.top_selling_stores = fetch_top_selling_stores()
+        st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
 
-    top_selling_stores = st.session_state.top_selling_stores
+    top_selling_stores = fetch_top_selling_stores(start_date, end_date)
     if top_selling_stores:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
@@ -138,7 +142,7 @@ def main():
             sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
         else:
             sales_fig = create_empty_line_chart()
-            st.warning("Select store IDs to see the number of sales for those stores")
+            st.sidebar.warning("Select store IDs to see the number of sales for those stores")
             
         st.plotly_chart(sales_fig, use_container_width=False)
     else:
