@@ -127,7 +127,7 @@ def main():
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
-            st.experimental_rerun()
+            st.rerun()
 
         # Update the bar chart with new colors
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
