@@ -15,8 +15,8 @@ def fetch_top_selling_stores(start_date, end_date):
         return []
 
 # Function to fetch sales data for all stores
-def fetch_sales_data():
-    response = requests.get(f'http://127.0.0.1:8000/sales-report/')
+def fetch_sales_data(period):
+    response = requests.get(f'http://localhost:8000/sales-report-time-interval/?period={period}')
     if response.status_code == 200:
         data = response.json()
         return data
@@ -57,26 +57,26 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
     return fig
 
 # Function to create line chart for sales data of multiple stores
-def create_sales_line_chart(data, store_ids, store_colors):
+def create_sales_line_chart(data, store_ids, store_colors, period):
     fig = go.Figure()
 
     for i, store_id in enumerate(store_ids):
         store_data = [item for item in data if item['storeid'] == store_id]
         if store_data:
-            quarters = [f"{item['year']}-{item['quarter']}" for item in store_data]
-            number_of_sales = [item['number_of_sales'] for item in store_data]
+            x_values = [item['period'] for item in store_data]
+            total_sales = [item['total_sales'] for item in store_data]
 
             fig.add_trace(go.Scatter(
-                x=quarters,
-                y=number_of_sales,
+                x=x_values,
+                y=total_sales,
                 mode='lines+markers',
                 name=f'Store {store_id}',
                 line=dict(color=store_colors[i])
             ))
 
     fig.update_layout(title='Number of Sales for Selected Stores',
-                      xaxis_title='Year-Quarter',
-                      yaxis_title='Number of Sales',
+                      xaxis_title=f'{period}',
+                      yaxis_title='Total Sales',
                       width=800,
                       height=400)
 
@@ -87,7 +87,7 @@ def create_empty_line_chart():
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='No data'))
     fig.update_layout(title='Number of Sales for Store',
-                      xaxis_title='Year-Quarter',
+                      xaxis_title='Period',
                       yaxis_title='Number of Sales',
                       width=800,
                       height=400)
@@ -97,6 +97,9 @@ def main():
     # Datumseingabe
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
+
+    # Periodenauswahl
+    period = st.sidebar.selectbox("Select Period", ["Day", "Week", "Month", "Quarter"], index=3)
 
     # Check if top-selling stores data is already in session_state and if dates have changed
     if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
@@ -134,12 +137,13 @@ def main():
 
         if st.session_state.selected_store_ids:
             # Fetch sales data if not already fetched
-            if 'sales_data' not in st.session_state:
-                st.session_state.sales_data = fetch_sales_data()
+            if 'sales_data' not in st.session_state or st.session_state.period != period:
+                st.session_state.sales_data = fetch_sales_data(period)
+                st.session_state.period = period
                 
             sales_data = st.session_state.sales_data
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
-            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
+            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
         else:
             sales_fig = create_empty_line_chart()
             st.sidebar.warning("Select store IDs to see the number of sales for those stores")
@@ -147,4 +151,3 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=False)
     else:
         st.error("No top selling stores data available.")
-
