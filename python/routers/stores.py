@@ -54,6 +54,11 @@ class StoreModel(BaseModel):
         orm_mode = True
         from_attributes = True
 
+class SalesData(BaseModel):
+    storeid: str
+    period: str
+    total_sales: int
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
@@ -254,6 +259,70 @@ async def get_repeat_customers_report(
     ]
 
     return report_data_dicts
+
+@router.get("/sales-report-time-interval/", response_model=List[SalesData])
+async def get_sales_data(
+    period: str = Query(..., regex="^(Day|Week|Month|Quarter)$"),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        WITH SalesData AS (
+            SELECT 
+                storeid,
+                DATE_TRUNC(
+                    CASE
+                        WHEN :period = 'Day' THEN 'day' 
+                        WHEN :period = 'Week' THEN 'week'
+                        WHEN :period = 'Month' THEN 'month'
+                        ELSE 'quarter'
+                    END, orderdate
+                ) AS period_date,
+                COUNT(orderid) AS number_of_sales
+            FROM 
+                orders
+            WHERE
+                orderdate >= CASE
+                                WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '12 DAYS' 
+                                WHEN :period = 'Week' THEN DATE '2022-12-31' - INTERVAL '12 WEEKS'
+                                WHEN :period = 'Month' THEN DATE '2022-12-31' - INTERVAL '12 MONTHS'
+                                ELSE '1900-01-01' -- Set a default past date for Quarter (or other cases)
+                            END
+            GROUP BY 
+                storeid, period_date
+        )
+        SELECT
+            storeid,
+            CASE
+                WHEN :period = 'Day' THEN TO_CHAR(period_date, 'YYYY-MM-DD')
+                WHEN :period = 'Week' THEN TO_CHAR(period_date, 'IYYY-IW')
+                WHEN :period = 'Month' THEN TO_CHAR(period_date, 'YYYY-MM')
+                ELSE TO_CHAR(period_date, 'IYYY-"Q"Q')
+            END AS period,
+            SUM(number_of_sales) AS total_sales
+        FROM
+            SalesData
+        GROUP BY
+            storeid,
+            period
+        ORDER BY
+            storeid,
+            period;
+    """)
+
+    result = await session.execute(query, {"period": period})
+    sales_data = result.fetchall()
+
+    if not sales_data:
+        raise HTTPException(status_code=404, detail="No sales data found.")
+
+    return [
+        {
+            "storeid": row[0],
+            "period": row[1],
+            "total_sales": row[2]
+        }
+        for row in sales_data
+    ]
 
 @router.get('/stores')
 def read_root():
