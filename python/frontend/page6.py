@@ -51,8 +51,8 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
                       xaxis_title='Store ID',
                       yaxis_title='Revenue',
                       clickmode='event+select',
-                      width=800,  # Setzt die Breite auf 800px
-                      height=400)  # Setzt die Höhe auf 400px
+                      width=800,
+                      height=400)
 
     return fig
 
@@ -77,9 +77,8 @@ def create_sales_line_chart(data, store_ids, store_colors):
     fig.update_layout(title='Number of Sales for Selected Stores',
                       xaxis_title='Year-Quarter',
                       yaxis_title='Number of Sales',
-                      width=800,  # Setzt die Breite des Diagramms auf 800 Pixel
-                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel
-    )
+                      width=800,
+                      height=400)
 
     return fig
 
@@ -90,21 +89,22 @@ def create_empty_line_chart():
     fig.update_layout(title='Number of Sales for Store',
                       xaxis_title='Year-Quarter',
                       yaxis_title='Number of Sales',
-                      width=800,  # Setzt die Breite des Diagramms auf 800 Pixel
-                      height=400  # Setzt die Höhe des Diagramms auf 400 Pixel
-    )
+                      width=800,
+                      height=400)
     return fig
 
 def main():
-     # Datumseingabe
+    # Datumseingabe
     start_date = st.sidebar.date_input("Start Date", value=date(2019, 12, 31))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
-    # Check if top-selling stores data is already in session_state
-    if 'top_selling_stores' not in st.session_state:
+    # Check if top-selling stores data is already in session_state and if dates have changed
+    if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
+        st.session_state.start_date = start_date
+        st.session_state.end_date = end_date
         st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
 
-    top_selling_stores = fetch_top_selling_stores(start_date, end_date)
+    top_selling_stores = st.session_state.top_selling_stores
     if top_selling_stores:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
@@ -127,7 +127,7 @@ def main():
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
-            st.rerun()
+            st.experimental_rerun()
 
         # Update the bar chart with new colors
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
@@ -147,3 +147,4 @@ def main():
         st.plotly_chart(sales_fig, use_container_width=False)
     else:
         st.error("No top selling stores data available.")
+
