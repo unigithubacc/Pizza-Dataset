@@ -3,6 +3,16 @@ import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 
+# Function to fetch top-selling stores data
+def fetch_top_selling_stores():
+    response = requests.get('http://localhost:8000/top-selling-stores')
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        st.error("Fehler beim Abrufen der Daten.")
+        return []
+
 # Function to fetch sales data for all stores
 def fetch_sales_data():
     response = requests.get(f'http://127.0.0.1:8000/sales-report/')
@@ -16,7 +26,7 @@ def fetch_sales_data():
 # Function to create bar chart for top-selling stores
 def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color):
     store_ids = sorted(set([item['storeid'] for item in data]))
-    total_revenue = {store_id: sum(item['number_of_sales'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
+    total_revenue = {store_id: next(item['TotalRevenue'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
 
     sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
 
@@ -38,7 +48,7 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
     fig.update_layout(barmode='group',
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
-                      yaxis_title='Total Sales',
+                      yaxis_title='Revenue',
                       clickmode='event+select',
                       width=800,  # Setzt die Breite auf 800px
                       height=400)  # Setzt die Höhe auf 400px
@@ -86,12 +96,12 @@ def create_empty_line_chart():
 
 def main():
 
-    # Check if sales data is already in session_state
-    if 'sales_data' not in st.session_state:
-        st.session_state.sales_data = fetch_sales_data()
+    # Check if top-selling stores data is already in session_state
+    if 'top_selling_stores' not in st.session_state:
+        st.session_state.top_selling_stores = fetch_top_selling_stores()
 
-    sales_data = st.session_state.sales_data
-    if sales_data:
+    top_selling_stores = st.session_state.top_selling_stores
+    if top_selling_stores:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
             st.session_state.selected_store_colors = []
@@ -100,7 +110,7 @@ def main():
         color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
         default_color = 'blue'
 
-        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+        fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         selected_points = plotly_events(fig, click_event=True)
         
         if selected_points:
@@ -116,9 +126,14 @@ def main():
             st.rerun()
 
         # Update the bar chart with new colors
-        fig = create_store_bar_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+        fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
 
         if st.session_state.selected_store_ids:
+            # Fetch sales data if not already fetched
+            if 'sales_data' not in st.session_state:
+                st.session_state.sales_data = fetch_sales_data()
+                
+            sales_data = st.session_state.sales_data
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
             sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
         else:
@@ -127,5 +142,4 @@ def main():
             
         st.plotly_chart(sales_fig, use_container_width=False)
     else:
-        st.error("No sales data available.")
-
+        st.error("No top selling stores data available.")

@@ -78,30 +78,18 @@ async def get_top_selling_stores(session: AsyncSession = Depends(get_session)):
     query = text("""
         SELECT
             stores.storeID,
-            stores.zipcode,
-            stores.State_abbr,
-            stores.latitude,
-            stores.longitude,
-            stores.city,
-            stores.state,
             SUM(orders.total) AS TotalRevenue
         FROM public.stores
         INNER JOIN public.orders ON stores.storeID = orders.storeID
-        GROUP BY stores.storeID, stores.zipcode, stores.State_abbr, stores.latitude, stores.longitude, stores.city, stores.state
+        GROUP BY stores.storeID
         ORDER BY TotalRevenue DESC;
     """)
     result = await session.execute(query)
     stores = result.fetchall()
     return [
         {
-            "storeID": store[0],
-            "zipcode": store[1],
-            "State_abbr": store[2],
-            "latitude": store[3],
-            "longitude": store[4],
-            "city": store[5],
-            "state": store[6],
-            "TotalRevenue": store[7]
+            "storeid": store[0],
+            "TotalRevenue": store[1]
         } for store in stores
     ]
 
