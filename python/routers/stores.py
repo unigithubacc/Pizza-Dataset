@@ -76,7 +76,7 @@ async def read_stores(filter: Optional[str] = Query(None, title="Filter", descri
 
 @router.get("/top-selling-stores")
 async def get_top_selling_stores(
-    start_date: date = date(2019, 12, 31),
+    start_date: date = date(2020, 1, 1),
     end_date: date = date(2023, 1, 1),
     session: AsyncSession = Depends(get_session)
 ):

@@ -49,7 +49,7 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
     fig.update_layout(barmode='group',
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
-                      yaxis_title='Revenue',
+                      yaxis_title='Revenue in $',
                       clickmode='event+select',
                       width=800,
                       height=400)
@@ -95,7 +95,7 @@ def create_empty_line_chart():
 
 def main():
     # Datumseingabe
-    start_date = st.sidebar.date_input("Start Date", value=date(2019, 12, 31))
+    start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Check if top-selling stores data is already in session_state and if dates have changed
@@ -112,7 +112,7 @@ def main():
 
         # Define color palette
         color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
-        default_color = 'blue'
+        default_color = 'lightskyblue'
 
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         selected_points = plotly_events(fig, click_event=True)
