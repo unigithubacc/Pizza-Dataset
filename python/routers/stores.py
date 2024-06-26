@@ -285,7 +285,7 @@ async def get_sales_data(
                 orders
             WHERE
                 orderdate >= CASE
-                                WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '12 DAYS' 
+                                WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '30 DAYS' 
                                 WHEN :period = 'Week' THEN DATE '2022-12-31' - INTERVAL '12 WEEKS'
                                 WHEN :period = 'Month' THEN DATE '2022-12-31' - INTERVAL '12 MONTHS'
                                 WHEN :period = 'Year' THEN CURRENT_DATE - INTERVAL '12 YEARS'
