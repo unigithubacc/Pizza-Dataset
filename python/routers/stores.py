@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from sqlalchemy import select
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, timedelta
 
 
 
@@ -262,9 +262,24 @@ async def get_repeat_customers_report(
 
 @router.get("/sales-report-time-interval/", response_model=List[SalesData])
 async def get_sales_data(
-    period: str = Query(..., regex="^(Day|Week|Month|Year|Quarter)$"),
+    period: str = Query(..., regex="^(Day|Month|Year|Quarter)$"),
+    end_date: date = Query(...),
     session: AsyncSession = Depends(get_session)
 ):
+    # Calculate start_date based on period
+    if period == 'Day':
+        start_date = end_date - timedelta(days=30)
+    elif period == 'Week':
+        # Calculate the start of the ISO year and week
+        iso_year, iso_week, _ = end_date.isocalendar()
+        start_date = date.fromisocalendar(iso_year - 1, iso_week, 1)
+    elif period == 'Month':
+        start_date = end_date - timedelta(days=365)  # Approximately 12 months
+    elif period == 'Year':
+        start_date = end_date - timedelta(days=365 * 12)  # Approximately 12 years
+    else:
+        start_date = date(1900, 1, 1)  # Default for Quarter
+
     query = text("""
         WITH SalesData AS (
             SELECT 
@@ -272,7 +287,6 @@ async def get_sales_data(
                 DATE_TRUNC(
                     CASE
                         WHEN :period = 'Day' THEN 'day' 
-                        WHEN :period = 'Week' THEN 'week'
                         WHEN :period = 'Month' THEN 'month'
                         WHEN :period = 'Year' THEN 'year'
                         ELSE 'quarter'
@@ -284,13 +298,8 @@ async def get_sales_data(
             FROM 
                 orders
             WHERE
-                orderdate >= CASE
-                                WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '30 DAYS' 
-                                WHEN :period = 'Week' THEN DATE '2022-12-31' - INTERVAL '12 WEEKS'
-                                WHEN :period = 'Month' THEN DATE '2022-12-31' - INTERVAL '12 MONTHS'
-                                WHEN :period = 'Year' THEN CURRENT_DATE - INTERVAL '12 YEARS'
-                                ELSE '1900-01-01'
-                            END
+                orderdate >= :start_date
+                AND orderdate <= :end_date
             GROUP BY 
                 storeid, period_date, year, quarter
         )
@@ -298,7 +307,6 @@ async def get_sales_data(
             storeid,
             CASE
                 WHEN :period = 'Day' THEN TO_CHAR(period_date, 'YYYY-MM-DD')
-                WHEN :period = 'Week' THEN TO_CHAR(period_date, 'IYYY-IW')
                 WHEN :period = 'Month' THEN TO_CHAR(period_date, 'YYYY-MM')
                 WHEN :period = 'Year' THEN TO_CHAR(period_date, 'YYYY')
                 ELSE TO_CHAR(year, '0000') || '-Q' || quarter
@@ -314,7 +322,12 @@ async def get_sales_data(
             period;
     """)
 
-    result = await session.execute(query, {"period": period})
+    # Execute the query with parameters passed separately
+    result = await session.execute(
+        query, 
+        {"period": period, "start_date": start_date, "end_date": end_date}
+    )
+    
     sales_data = result.fetchall()
 
     if not sales_data:

@@ -15,8 +15,8 @@ def fetch_top_selling_stores(start_date, end_date):
         return []
 
 # Function to fetch sales data for all stores
-def fetch_sales_data(period):
-    response = requests.get(f'http://localhost:8000/sales-report-time-interval/?period={period}')
+def fetch_sales_data(period, end_date):
+    response = requests.get(f'http://localhost:8000/sales-report-time-interval/?period={period}&end_date={end_date}')
     if response.status_code == 200:
         data = response.json()
         return data
@@ -99,7 +99,7 @@ def main():
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Periodenauswahl
-    period = st.sidebar.selectbox("Select Period", ["Day", "Week", "Month", "Quarter", "Year"], index=3)
+    period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=3)
 
     # Check if top-selling stores data is already in session_state and if dates have changed
     if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
@@ -136,10 +136,13 @@ def main():
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
 
         if st.session_state.selected_store_ids:
-            # Fetch sales data if not already fetched
             if 'sales_data' not in st.session_state or st.session_state.period != period:
-                st.session_state.sales_data = fetch_sales_data(period)
+                st.session_state.sales_data = fetch_sales_data(period, st.session_state.end_date)
                 st.session_state.period = period
+
+            if 'sales_data' not in st.session_state or st.session_state.end_date != end_date:
+                st.session_state.sales_data = fetch_sales_data(st.session_state.period, end_date)
+                st.session_state.end_date = end_date
                 
             sales_data = st.session_state.sales_data
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
