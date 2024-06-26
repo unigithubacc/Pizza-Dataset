@@ -99,7 +99,7 @@ def main():
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Periodenauswahl
-    period = st.sidebar.selectbox("Select Period", ["Day", "Week", "Month", "Quarter"], index=3)
+    period = st.sidebar.selectbox("Select Period", ["Day", "Week", "Month", "Quarter", "Year"], index=3)
 
     # Check if top-selling stores data is already in session_state and if dates have changed
     if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:

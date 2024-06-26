@@ -262,7 +262,7 @@ async def get_repeat_customers_report(
 
 @router.get("/sales-report-time-interval/", response_model=List[SalesData])
 async def get_sales_data(
-    period: str = Query(..., regex="^(Day|Week|Month|Quarter)$"),
+    period: str = Query(..., regex="^(Day|Week|Month|Year|Quarter)$"),
     session: AsyncSession = Depends(get_session)
 ):
     query = text("""
@@ -274,6 +274,7 @@ async def get_sales_data(
                         WHEN :period = 'Day' THEN 'day' 
                         WHEN :period = 'Week' THEN 'week'
                         WHEN :period = 'Month' THEN 'month'
+                        WHEN :period = 'Year' THEN 'year'
                         ELSE 'quarter'
                     END, orderdate
                 ) AS period_date,
@@ -287,6 +288,7 @@ async def get_sales_data(
                                 WHEN :period = 'Day' THEN DATE '2022-12-31' - INTERVAL '12 DAYS' 
                                 WHEN :period = 'Week' THEN DATE '2022-12-31' - INTERVAL '12 WEEKS'
                                 WHEN :period = 'Month' THEN DATE '2022-12-31' - INTERVAL '12 MONTHS'
+                                WHEN :period = 'Year' THEN CURRENT_DATE - INTERVAL '12 YEARS'
                                 ELSE '1900-01-01'
                             END
             GROUP BY 
@@ -298,6 +300,7 @@ async def get_sales_data(
                 WHEN :period = 'Day' THEN TO_CHAR(period_date, 'YYYY-MM-DD')
                 WHEN :period = 'Week' THEN TO_CHAR(period_date, 'IYYY-IW')
                 WHEN :period = 'Month' THEN TO_CHAR(period_date, 'YYYY-MM')
+                WHEN :period = 'Year' THEN TO_CHAR(period_date, 'YYYY')
                 ELSE TO_CHAR(year, '0000') || '-Q' || quarter
             END AS period,
             SUM(number_of_sales) AS total_sales
