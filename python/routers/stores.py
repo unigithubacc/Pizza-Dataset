@@ -342,6 +342,92 @@ async def get_sales_data(
         for row in sales_data
     ]
 
+@router.get("/revenue-by-store/", response_model=List[dict])
+async def get_revenue_by_store(
+    storeid: List[str] = Query(..., alias='storeid'),
+    period: str = Query(..., regex="^(Day|Week|Month|Year|Quarter)$"),
+    end_date: date = Query(...),
+    session: AsyncSession = Depends(get_session)
+):
+    try:
+        # Calculate start_date based on period
+        if period == 'Day':
+            start_date = end_date - timedelta(days=30)
+        elif period == 'Week':
+            iso_year, iso_week, _ = end_date.isocalendar()
+            start_date = date.fromisocalendar(iso_year - 1, iso_week, 1)
+        elif period == 'Month':
+            start_date = end_date - timedelta(days=365)  # Approximately 12 months
+        elif period == 'Year':
+            start_date = end_date - timedelta(days=365 * 12)  # Approximately 12 years
+        else:
+            start_date = date(1900, 1, 1)  # Default for Quarter
+
+        query = text("""
+            WITH RevenueData AS (
+                SELECT 
+                    storeid,
+                    DATE_TRUNC(
+                        CASE
+                            WHEN :period = 'Day' THEN 'day' 
+                            WHEN :period = 'Week' THEN 'week'
+                            WHEN :period = 'Month' THEN 'month'
+                            WHEN :period = 'Year' THEN 'year'
+                            ELSE 'quarter'
+                        END, orderdate
+                    ) AS period_date,
+                    EXTRACT(YEAR FROM orderdate) AS year,
+                    EXTRACT(QUARTER FROM orderdate) AS quarter,
+                    SUM(total) AS total_revenue
+                FROM 
+                    orders
+                WHERE
+                    orderdate >= :start_date
+                    AND orderdate <= :end_date
+                    AND storeid IN :store_ids
+                GROUP BY 
+                    storeid, period_date, year, quarter
+            )
+            SELECT
+                storeid,
+                CASE
+                    WHEN :period = 'Day' THEN TO_CHAR(period_date, 'YYYY-MM-DD')
+                    WHEN :period = 'Week' THEN TO_CHAR(period_date, 'YYYY-IW')
+                    WHEN :period = 'Month' THEN TO_CHAR(period_date, 'YYYY-MM')
+                    WHEN :period = 'Year' THEN TO_CHAR(period_date, 'YYYY')
+                    ELSE TO_CHAR(year, '0000') || '-Q' || quarter
+                END AS period,
+                SUM(total_revenue) AS total_revenue
+            FROM
+                RevenueData
+            GROUP BY
+                storeid,
+                period
+            ORDER BY
+                storeid,
+                period;
+        """).bindparams(bindparam('store_ids', expanding=True))
+
+        result = await session.execute(
+            query, 
+            {"period": period, "start_date": start_date, "end_date": end_date, "store_ids": storeid}
+        )
+        sales_data = result.fetchall()
+        
+        if not sales_data:
+            raise HTTPException(status_code=404, detail="No revenue data found for the specified stores.")
+        
+        return [
+            {
+                "storeid": row[0],
+                "period": row[1],
+                "total_revenue": row[2]
+            }
+            for row in sales_data
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get('/stores')
 def read_root():
     return {"Hello": "World123"}
