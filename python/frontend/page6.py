@@ -14,7 +14,7 @@ def fetch_top_selling_stores(start_date, end_date):
         st.error("Fehler beim Abrufen der Daten.")
         return []
 
-# Function to fetch sales data for all stores
+# Funktion zum Abrufen der Verkaufsdaten
 def fetch_sales_data(period, end_date):
     response = requests.get(f'http://localhost:8000/sales-report-time-interval/?period={period}&end_date={end_date}')
     if response.status_code == 200:
@@ -24,7 +24,7 @@ def fetch_sales_data(period, end_date):
         st.error("Fehler beim Abrufen der Verkaufsdaten.")
         return []
 
-# Function to create bar chart for top-selling stores
+# Funktion zum Erstellen eines Balkendiagramms
 def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color):
     store_ids = sorted(set([item['storeid'] for item in data]))
     total_revenue = {store_id: next(item['TotalRevenue'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
@@ -56,7 +56,7 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
 
     return fig
 
-# Function to create line chart for sales data of multiple stores
+# Funktion zum Erstellen eines Liniendiagramms
 def create_sales_line_chart(data, store_ids, store_colors, period):
     fig = go.Figure()
 
@@ -82,7 +82,7 @@ def create_sales_line_chart(data, store_ids, store_colors, period):
 
     return fig
 
-# Function to create an empty line chart
+# Funktion zum Erstellen eines leeren Liniendiagramms
 def create_empty_line_chart():
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='No data'))
@@ -101,27 +101,31 @@ def main():
     # Periodenauswahl
     period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=3)
 
-    # Check if top-selling stores data is already in session_state and if dates have changed
-    if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
+    # API-Aufrufe nur bei Änderungen von end_date oder period
+    if 'top_selling_stores' not in st.session_state or 'sales_data' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date or st.session_state.period != period:
         st.session_state.start_date = start_date
         st.session_state.end_date = end_date
+        st.session_state.period = period
         st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
+        st.session_state.sales_data = fetch_sales_data(period, end_date)
 
     top_selling_stores = st.session_state.top_selling_stores
+    sales_data = st.session_state.sales_data
+
     if top_selling_stores:
         if 'selected_store_ids' not in st.session_state:
             st.session_state.selected_store_ids = []
             st.session_state.selected_store_colors = []
 
-        # Define color palette
+        # Farbpalette definieren
         color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
         default_color = 'lightskyblue'
 
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         selected_points = plotly_events(fig, click_event=True)
-        
+
         if selected_points:
-            # Extract the store_id from the x-coordinate
+            # Store ID aus den ausgewählten Punkten extrahieren
             new_store_id = selected_points[0]['x']
             if new_store_id in st.session_state.selected_store_ids:
                 index = st.session_state.selected_store_ids.index(new_store_id)
@@ -132,25 +136,16 @@ def main():
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
             st.rerun()
 
-        # Update the bar chart with new colors
+        # Aktualisiere das Balkendiagramm mit neuen Farben
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
 
         if st.session_state.selected_store_ids:
-            if 'sales_data' not in st.session_state or st.session_state.period != period:
-                st.session_state.sales_data = fetch_sales_data(period, st.session_state.end_date)
-                st.session_state.period = period
-
-            if 'sales_data' not in st.session_state or st.session_state.end_date != end_date:
-                st.session_state.sales_data = fetch_sales_data(st.session_state.period, end_date)
-                st.session_state.end_date = end_date
-                
-            sales_data = st.session_state.sales_data
             st.write(f"Selected Store IDs: {st.session_state.selected_store_ids}")  # Debugging Line
             sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
         else:
             sales_fig = create_empty_line_chart()
             st.sidebar.warning("Select store IDs to see the number of sales for those stores")
-            
+
         st.plotly_chart(sales_fig, use_container_width=False)
     else:
         st.error("No top selling stores data available.")
