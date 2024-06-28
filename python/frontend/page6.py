@@ -5,6 +5,7 @@ from streamlit_plotly_events import plotly_events
 from datetime import date
 
 # Funktion zum Abrufen der Top-Selling-Stores-Daten
+@st.cache_data
 def fetch_top_selling_stores(start_date, end_date):
     response = requests.get(f'http://localhost:8000/top-selling-stores?start_date={start_date}&end_date={end_date}')
     if response.status_code == 200:
@@ -15,6 +16,7 @@ def fetch_top_selling_stores(start_date, end_date):
         return []
 
 # Funktion zum Abrufen der Revenue-Daten für ausgewählte Stores
+@st.cache_data
 def fetch_revenue_data(store_ids, period, end_date):
     store_id_query = "&".join([f"storeid={store_id}" for store_id in store_ids])
     url = f'http://localhost:8000/revenue-by-store/?{store_id_query}&period={period}&end_date={end_date}'
@@ -27,6 +29,7 @@ def fetch_revenue_data(store_ids, period, end_date):
         return []
 
 # Funktion zum Abrufen der Verkaufsdaten (Total Sales)
+@st.cache_data
 def fetch_sales_data(period, end_date):
     response = requests.get(f'http://localhost:8000/sales-report-time-interval/?period={period}&end_date={end_date}')
     if response.status_code == 200:
@@ -55,14 +58,15 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
             showlegend=True,
             marker_color=marker_color,
             customdata=[store_id],
-            hoverinfo='x+y'
+            hoverinfo='x+y',
+            selectedpoints=None  # Ensure no selection highlighting
         ))
 
     fig.update_layout(barmode='group',
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
                       yaxis_title='Revenue in $',
-                      clickmode='event+select',
+                      clickmode='event',
                       width=800,
                       height=400)
 
@@ -169,11 +173,9 @@ def main():
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
-            st.rerun()
 
         # Aktualisiere das Balkendiagramm mit neuen Farben
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
-
 
         # Erstelle und zeige das Revenue-Liniendiagramm unter dem Balkendiagramm
         if st.session_state.selected_store_ids:
@@ -192,4 +194,3 @@ def main():
 
     else:
         st.error("No top selling stores data available.")
-
