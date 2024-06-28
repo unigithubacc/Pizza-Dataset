@@ -59,6 +59,12 @@ class SalesData(BaseModel):
     period: str
     total_sales: int
 
+class ProductRevenue(BaseModel):
+    name: str
+    size: str
+    product_revenue: float
+    number_of_orders: int
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
@@ -427,6 +433,50 @@ async def get_revenue_by_store(
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/store-products-revenue", response_model=List[ProductRevenue])
+async def get_store_products_revenue(
+    storeid: str,
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            p.name,
+            p.size,
+            SUM(o.total) AS product_revenue,
+            COUNT(oi.orderid) AS number_of_orders
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderid = oi.orderid
+        JOIN 
+            products p ON oi.sku = p.sku
+        JOIN 
+            stores s ON o.storeid = s.storeid
+        WHERE 
+            s.storeid = :storeid AND
+            o.orderdate BETWEEN :start_date AND :end_date
+        GROUP BY 
+            p.sku, p.name, p.category, p.size
+        ORDER BY 
+            product_revenue DESC;
+    """)
+    result = await session.execute(query, {
+        "storeid": storeid,
+        "start_date": start_date,
+        "end_date": end_date
+    })
+    products = result.fetchall()
+    return [
+        {
+            "name": product[0],
+            "size": product[1],
+            "product_revenue": product[2],
+            "number_of_orders": product[3]
+        } for product in products
+    ]
 
 @router.get('/stores')
 def read_root():
