@@ -350,7 +350,6 @@ async def get_sales_data(
 
 @router.get("/revenue-by-store/", response_model=List[dict])
 async def get_revenue_by_store(
-    storeid: List[str] = Query(..., alias='storeid'),
     period: str = Query(..., regex="^(Day|Week|Month|Year|Quarter)$"),
     end_date: date = Query(...),
     session: AsyncSession = Depends(get_session)
@@ -390,7 +389,6 @@ async def get_revenue_by_store(
                 WHERE
                     orderdate >= :start_date
                     AND orderdate <= :end_date
-                    AND storeid IN :store_ids
                 GROUP BY 
                     storeid, period_date, year, quarter
             )
@@ -412,11 +410,11 @@ async def get_revenue_by_store(
             ORDER BY
                 storeid,
                 period;
-        """).bindparams(bindparam('store_ids', expanding=True))
+        """)
 
         result = await session.execute(
             query, 
-            {"period": period, "start_date": start_date, "end_date": end_date, "store_ids": storeid}
+            {"period": period, "start_date": start_date, "end_date": end_date}
         )
         sales_data = result.fetchall()
         

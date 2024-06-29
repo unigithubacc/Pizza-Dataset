@@ -20,10 +20,8 @@ def fetch_top_selling_stores(start_date, end_date):
 
 # Funktion zum Abrufen der Revenue-Daten für ausgewählte Stores
 @st.cache_data
-def fetch_revenue_data(store_ids, period, end_date):
-    store_id_query = "&".join([f"storeid={store_id}" for store_id in store_ids])
-    url = f'http://localhost:8000/revenue-by-store/?{store_id_query}&period={period}&end_date={end_date}'
-    response = requests.get(url)
+def fetch_revenue_data(period, end_date):
+    response = requests.get(f'http://localhost:8000/revenue-by-store/?period={period}&end_date={end_date}')
     if response.status_code == 200:
         data = response.json()
         return data
@@ -186,7 +184,7 @@ def main():
 
         # Erstelle und zeige das Revenue-Liniendiagramm unter dem Balkendiagramm
         if st.session_state.selected_store_ids:
-            revenue_data = fetch_revenue_data(st.session_state.selected_store_ids, period, end_date)
+            revenue_data = fetch_revenue_data(period, end_date)
             revenue_fig = create_revenue_line_chart(revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
             st.plotly_chart(revenue_fig, use_container_width=False)
 

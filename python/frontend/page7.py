@@ -52,7 +52,6 @@ def create_store_bar_chart2(data):
 def main():
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))    
-    st.title("Top Selling Stores")
 
     stores_data = fetch_top_selling_stores(start_date, end_date)
     if stores_data:
