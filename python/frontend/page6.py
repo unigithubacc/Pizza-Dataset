@@ -174,6 +174,7 @@ def main():
                 index = st.session_state.selected_store_ids.index(new_store_id)
                 st.session_state.selected_store_ids.pop(index)
                 st.session_state.selected_store_colors.pop(index)
+                st.rerun()
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
