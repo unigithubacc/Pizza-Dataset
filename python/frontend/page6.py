@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 from datetime import date
 
+logging.basicConfig(level=logging.DEBUG)
+
 # Funktion zum Abrufen der Top-Selling-Stores-Daten
 @st.cache_data
 def fetch_top_selling_stores(start_date, end_date):
@@ -175,6 +177,7 @@ def main():
             else:
                 st.session_state.selected_store_ids.append(new_store_id)
                 st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
+                st.rerun()
 
         # Aktualisiere das Balkendiagramm mit neuen Farben
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
