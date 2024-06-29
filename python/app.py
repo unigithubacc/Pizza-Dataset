@@ -92,7 +92,7 @@ ICONS = {
 load_css()
 
 # URL-Parameter auslesen
-page_param = st.query_params.get('page', 'Products')
+page_param = st.query_params.get('page', 'Store/Multi Store View')
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
@@ -101,7 +101,7 @@ st.sidebar.title("Navigation")
 selection = None
 
 # Hauptseiten
-main_pages = ["Products", "Store", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+main_pages = [ "Store", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
 for page in main_pages:
     if page == "Store":
         store_expanded = st.sidebar.expander("🏪 Store", expanded=page_param.startswith("Store"))
@@ -118,7 +118,7 @@ for page in main_pages:
 
 # Wenn keine Seite ausgewählt wurde, wähle die Standardseite
 if not selection:
-    selection = page_param if page_param in PAGES else 'Products'
+    selection = page_param if page_param in PAGES else 'Store/Multi Store View'
 
 # Setze URL-Parameter basierend auf der Auswahl in der Sidebar
 st.query_params.page = selection
