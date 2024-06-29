@@ -1,3 +1,4 @@
+import logging
 import streamlit as st
 import requests
 import plotly.graph_objects as go
@@ -162,6 +163,7 @@ def main():
 
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         selected_points = plotly_events(fig, click_event=True)
+        logging.debug(f"Selected points: {selected_points}")
 
         if selected_points:
             # Store ID aus den ausgewählten Punkten extrahieren
@@ -176,6 +178,7 @@ def main():
 
         # Aktualisiere das Balkendiagramm mit neuen Farben
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+        logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
         # Erstelle und zeige das Revenue-Liniendiagramm unter dem Balkendiagramm
         if st.session_state.selected_store_ids:
