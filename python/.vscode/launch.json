@@ -1,44 +1,17 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Start Uvicorn",
+            "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "api:app",
-                "--reload"
-            ],
-            "jinja": true
-        }
-    ]
-}
-
-/*
-
-__init__.py noch hinzufügen
-
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Backend Starten",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "program": "C://Users//Uni//ProgrammingLab//Pizza-Dataset//python//dev.py",
             "console": "integratedTerminal",
-            "args": ["--host", "127.0.0.1"]
-        },
-        {
-            "name": "Frontend Starten",
-            "type": "shell",
-            "request": "launch",
-            "command": "streamlit run ${workspaceFolder}/app.py",
-            "presentation": {
-                "reveal": "always"
-            }
+            "justMyCode": true,
+            "args": ["run", "dev.py"]
         }
     ]
 }
-*/
