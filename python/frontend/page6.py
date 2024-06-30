@@ -40,6 +40,22 @@ def fetch_sales_data(period, end_date):
         st.error("Fehler beim Abrufen der Verkaufsdaten.")
         return []
 
+def prepare_data_for_chart(data, store_ids, period):
+    prepared_data = []
+    for store_id in store_ids:
+        filtered_data = [entry for entry in data if entry['storeid'] == store_id]
+        if filtered_data:
+            # Entscheidung, ob der erste Eintrag ignoriert werden soll, basierend auf dem Period
+            ignore_first_entry = False
+            if period in ["Day", "Month"]:
+                ignore_first_entry = True
+            
+            if ignore_first_entry:
+                # Ignorieren des ersten Eintrags für jede storeID
+                filtered_data = filtered_data[1:]  # Starte bei Index 1, um den ersten Eintrag zu ignorieren
+            prepared_data.extend(filtered_data)
+    return prepared_data
+
 # Funktion zum Erstellen eines Balkendiagramms
 def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color):
     store_ids = sorted(set([item['storeid'] for item in data]))
@@ -145,7 +161,7 @@ def main():
     period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=3)
 
     # API-Aufrufe nur bei Änderungen von end_date oder period
-    if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
+    if 'top_selling_stores' not in st.session_state or st.session_state.start_date!= start_date or st.session_state.end_date!= end_date:
         st.session_state.start_date = start_date
         st.session_state.end_date = end_date
         st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
@@ -182,16 +198,24 @@ def main():
         fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
         logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
-        # Erstelle und zeige das Revenue-Liniendiagramm unter dem Balkendiagramm
+        # Auswahl des anzuzeigenden Diagramms
+        chart_type = st.sidebar.radio("Select Chart Type", ("Revenue", "Total Sales"))
+
         if st.session_state.selected_store_ids:
             revenue_data = fetch_revenue_data(period, end_date)
-            revenue_fig = create_revenue_line_chart(revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-            st.plotly_chart(revenue_fig, use_container_width=False)
-
-            # Erstelle und zeige das Total Sales-Liniendiagramm
             sales_data = fetch_sales_data(period, end_date)
-            sales_fig = create_sales_line_chart(sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-            st.plotly_chart(sales_fig, use_container_width=False)
+
+            if chart_type == "Revenue":
+                # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
+                prepared_revenue_data = prepare_data_for_chart(revenue_data, st.session_state.selected_store_ids, period)
+                revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
+                st.plotly_chart(revenue_fig, use_container_width=False)
+                
+            elif chart_type == "Total Sales":
+                # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
+                prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
+                sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
+                st.plotly_chart(sales_fig, use_container_width=False)
         else:
             empty_fig = create_empty_line_chart()
             st.plotly_chart(empty_fig, use_container_width=False)

@@ -65,6 +65,12 @@ class ProductRevenue(BaseModel):
     product_revenue: float
     number_of_orders: int
 
+class ProductRevenue(BaseModel):
+    name: str
+    size: Optional[str]
+    product_revenue: float
+    number_of_orders: int
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
@@ -357,10 +363,7 @@ async def get_revenue_by_store(
     try:
         # Calculate start_date based on period
         if period == 'Day':
-            start_date = end_date - timedelta(days=30)
-        elif period == 'Week':
-            iso_year, iso_week, _ = end_date.isocalendar()
-            start_date = date.fromisocalendar(iso_year - 1, iso_week, 1)
+            start_date = end_date - timedelta(days=31)
         elif period == 'Month':
             start_date = end_date - timedelta(days=365)  # Approximately 12 months
         elif period == 'Year':
@@ -437,12 +440,16 @@ async def get_store_products_revenue(
     storeid: str,
     start_date: date = date(2020, 1, 1),
     end_date: date = date(2023, 1, 1),
+    divide_by_size: bool = True,
     session: AsyncSession = Depends(get_session)
 ):
-    query = text("""
+    group_by_clause = "p.sku, p.name, p.category, p.size" if divide_by_size else "p.sku, p.name, p.category"
+    select_size_clause = "p.size" if divide_by_size else "NULL AS size"
+    
+    query = text(f"""
         SELECT 
             p.name,
-            p.size,
+            {select_size_clause},
             SUM(o.total) AS product_revenue,
             COUNT(oi.orderid) AS number_of_orders
         FROM 
@@ -457,16 +464,18 @@ async def get_store_products_revenue(
             s.storeid = :storeid AND
             o.orderdate BETWEEN :start_date AND :end_date
         GROUP BY 
-            p.sku, p.name, p.category, p.size
+            {group_by_clause}
         ORDER BY 
             product_revenue DESC;
     """)
+    
     result = await session.execute(query, {
         "storeid": storeid,
         "start_date": start_date,
         "end_date": end_date
     })
     products = result.fetchall()
+    
     return [
         {
             "name": product[0],
@@ -475,7 +484,7 @@ async def get_store_products_revenue(
             "number_of_orders": product[3]
         } for product in products
     ]
-
+    
 @router.get('/stores')
 def read_root():
     return {"Hello": "World123"}
