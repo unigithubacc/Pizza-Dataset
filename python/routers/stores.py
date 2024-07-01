@@ -65,12 +65,17 @@ class ProductRevenue(BaseModel):
     product_revenue: float
     number_of_orders: int
 
-class ProductRevenue(BaseModel):
+class ProductRevenueWithSize(BaseModel):
     name: str
     size: Optional[str]
     product_revenue: float
     number_of_orders: int
 
+class ProductRevenueWithoutSize(BaseModel):
+    name: str
+    product_revenue: float
+    number_of_orders: int
+    
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
@@ -435,7 +440,7 @@ async def get_revenue_by_store(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/store-products-revenue", response_model=List[ProductRevenue])
+@router.get("/store-products-revenue")
 async def get_store_products_revenue(
     storeid: str,
     start_date: date = date(2020, 1, 1),
@@ -443,7 +448,7 @@ async def get_store_products_revenue(
     divide_by_size: bool = True,
     session: AsyncSession = Depends(get_session)
 ):
-    group_by_clause = "p.sku, p.name, p.category, p.size" if divide_by_size else "p.sku, p.name, p.category"
+    group_by_clause = "p.name, p.size" if divide_by_size else "p.name"
     select_size_clause = "p.size" if divide_by_size else "NULL AS size"
     
     query = text(f"""
@@ -476,14 +481,25 @@ async def get_store_products_revenue(
     })
     products = result.fetchall()
     
-    return [
-        {
-            "name": product[0],
-            "size": product[1],
-            "product_revenue": product[2],
-            "number_of_orders": product[3]
-        } for product in products
-    ]
+    if divide_by_size:
+        response_data = [
+            {
+                "name": product[0],
+                "size": product[1],
+                "product_revenue": product[2],
+                "number_of_orders": product[3]
+            } for product in products
+        ]
+    else:
+        response_data = [
+            {
+                "name": product[0],
+                "product_revenue": product[2],
+                "number_of_orders": product[3]
+            } for product in products
+        ]
+    
+    return response_data
     
 @router.get('/stores')
 def read_root():

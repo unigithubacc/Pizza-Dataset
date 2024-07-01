@@ -56,14 +56,19 @@ def create_store_bar_chart2(data):
     return fig2
 
 # Function to create bar chart for store product revenue
-def create_product_revenue_bar_chart(data):
+def create_product_revenue_bar_chart(data, divide_by_size):
     product_names = [product['name'] for product in data]
-    product_sizes = [product['size'] for product in data]
     product_revenues = [product['product_revenue'] for product in data]
+
+    if divide_by_size:
+        product_sizes = [product['size'] for product in data]
+        labels = [f"{name} ({size})" for name, size in zip(product_names, product_sizes)]
+    else:
+        labels = product_names
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        y=[f"{name} ({size})" for name, size in zip(product_names, product_sizes)],
+        y=labels,
         x=product_revenues,
         marker_color='lightskyblue',
         hoverinfo='y+x',
@@ -73,10 +78,10 @@ def create_product_revenue_bar_chart(data):
 
     fig.update_layout(
         title='Store Product Revenue',
-        yaxis_title='Product Name (Size)',
+        yaxis_title='Product Name' + (' (Size)' if divide_by_size else ''),
         xaxis_title='Product Revenue in $',
         height=500,
-        barmode='stack'
+        barmode='relative'
     )
 
     return fig
@@ -100,5 +105,6 @@ def main():
             selected_store_id = selected_points[0]['x']
             store_product_data = fetch_store_product_revenue(selected_store_id, start_date, end_date, divide_by_size)
             if store_product_data:
-                fig = create_product_revenue_bar_chart(store_product_data)
+                fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
                 st.plotly_chart(fig)  # Hier wird das zweite Diagramm angezeigt
+
