@@ -133,6 +133,10 @@ def create_product_size_pie_chart(data):
     return fig
 
 def main():
+    # Initialisierung von session_state
+    if 'selected_store_id' not in st.session_state:
+        st.session_state.selected_store_id = None
+
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
     
@@ -146,9 +150,12 @@ def main():
             fig2 = create_store_bar_chart2(stores_data)
             selected_points = plotly_events(fig2, click_event=True)
 
+            if selected_points:
+                st.session_state.selected_store_id = selected_points[0]['x']
+
     with col2:
-        if selected_points:
-            selected_store_id = selected_points[0]['x']
+        if st.session_state.selected_store_id is not None:
+            selected_store_id = st.session_state.selected_store_id
             store_product_data = fetch_store_product_revenue(selected_store_id, start_date, end_date, divide_by_size)
             if store_product_data:
                 fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
