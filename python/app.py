@@ -9,7 +9,7 @@ from frontend.page7 import main as page7_main
 from frontend.page8 import main as page8_main
 from navigation import render_navbar, close_navbar
 
-st.set_page_config(layout="wide")  # Setzen Sie hier das Layout auf "wide"
+st.set_page_config(page_title="Pizza Data Manager", page_icon=":material/local_pizza:", layout="wide")   # Setzen Sie hier das Layout auf "wide"
 
 # Lade die CSS-Datei
 def load_css():
@@ -95,7 +95,7 @@ load_css()
 page_param = st.query_params.get('page', 'Store/Multi Store View')
 
 # Sidebar Navigation
-st.sidebar.title("Navigation")
+#st.sidebar.title("Navigation")
 
 # Füge Buttons für jede Seite hinzu und speichere die Auswahl
 selection = None
@@ -124,7 +124,7 @@ if not selection:
 st.query_params.page = selection
 
 # Navigation rendern und Auswahl speichern
-render_navbar("Pizza shop analysis tool", list(PAGES.keys()), selection)
+# render_navbar("Pizza shop analysis tool", list(PAGES.keys()), selection)
 
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]

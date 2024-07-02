@@ -90,7 +90,7 @@ def main():
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
     
-    divide_by_size = st.sidebar.checkbox("Divide by Size", value=True)
+    divide_by_size = st.sidebar.checkbox("Divide Pizzas by Size", value=False)
 
     col1, col2 = st.columns([4, 5])
 
@@ -107,4 +107,6 @@ def main():
             if store_product_data:
                 fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
                 st.plotly_chart(fig)  # Hier wird das zweite Diagramm angezeigt
+        else: 
+            st.sidebar.warning("Select a Store to see more information")
 
