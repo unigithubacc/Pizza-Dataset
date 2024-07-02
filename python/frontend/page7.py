@@ -149,7 +149,8 @@ def main():
         if stores_data:
             fig2 = create_store_bar_chart2(stores_data)
             selected_points = plotly_events(fig2, click_event=True)
-
+            st.write(f"Selected Store ID: {st.session_state.selected_store_id}")
+            
             if selected_points:
                 st.session_state.selected_store_id = selected_points[0]['x']
 
@@ -160,6 +161,8 @@ def main():
             if store_product_data:
                 fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
                 st.plotly_chart(fig)
+        else:
+            st.sidebar.warning("Select store IDs to see the number of sales for those stores")
             
     with col3:        # Fetch and display product category pie chart
         if st.session_state.selected_store_id is not None:

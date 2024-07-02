@@ -158,7 +158,7 @@ def main():
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Periodenauswahl
-    period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=3)
+    period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=2)
 
     col1, col2 = st.columns([1, 1])
     
