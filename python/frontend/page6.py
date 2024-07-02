@@ -3,9 +3,20 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
+import folium
+from streamlit_folium import folium_static
 from datetime import date
 
 logging.basicConfig(level=logging.DEBUG)
+
+@st.cache_data
+def fetch_store_locations():
+    response = requests.get('http://localhost:8000/store-locations')
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Fehler beim Abrufen der Store-Standorte.")
+        return []
 
 # Funktion zum Abrufen der Top-Selling-Stores-Daten
 @st.cache_data
@@ -175,6 +186,28 @@ def create_customers_pie_chart(data, selected_store_ids, selected_store_colors):
 
     return fig
 
+def create_store_map(selected_store_ids, width='100%', height=500):
+    stores = fetch_store_locations()
+    selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
+
+    if selected_stores:
+        avg_lat = sum([store['latitude'] for store in selected_stores]) / len(selected_stores)
+        avg_lon = sum([store['longitude'] for store in selected_stores]) / len(selected_stores)
+    else:
+        avg_lat, avg_lon = 0, 0
+
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
+
+    for store in selected_stores:
+        store_popup = f"Store ID: {store['storeID']}<br>City: {store['city']}<br>State: {store['state']}"
+        folium.Marker(
+            location=[store['latitude'], store['longitude']],
+            popup=store_popup,
+            icon=folium.Icon(color='red', icon='home', prefix='fa')
+        ).add_to(m)
+
+    return m
+
 # Hauptfunktion
 def main():
     # Datumseingabe
@@ -225,7 +258,8 @@ def main():
             fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
             logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
-            # Auswahl des anzuzeigenden Diagramms
+            store_map = create_store_map(st.session_state.selected_store_ids, width='100%', height=500)
+            folium_static(store_map, width=700, height=300)
 
     with col2:
         if st.session_state.selected_store_ids:
