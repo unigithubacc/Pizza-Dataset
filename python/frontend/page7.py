@@ -142,7 +142,7 @@ def main():
     
     divide_by_size = st.sidebar.checkbox("Divide Pizzas by Size", value=False)
 
-    col1, col2 = st.columns([4, 5])
+    col1, col2, col3 = st.columns([2, 2 ,1])
 
     with col1:
         stores_data = fetch_top_selling_stores(start_date, end_date)
@@ -161,18 +161,18 @@ def main():
                 fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
                 st.plotly_chart(fig)
             
-            # Fetch and display product category pie chart
+    with col3:        # Fetch and display product category pie chart
+        if st.session_state.selected_store_id is not None:
             store_category_data = fetch_products_category(selected_store_id, start_date, end_date)
             store_size_data = fetch_products_size(selected_store_id, start_date, end_date)
             
             if store_category_data and store_size_data:
-                col3, col4 = st.columns(2)
-                with col3:
-                    pie_chart_category = create_product_category_pie_chart(store_category_data)
-                    st.plotly_chart(pie_chart_category)
-                
-                with col4:
+                #col3, col4 = st.columns(2)
+               # with col3:
                     pie_chart_size = create_product_size_pie_chart(store_size_data)
                     st.plotly_chart(pie_chart_size)
-        else: 
-            st.sidebar.warning("Select a Store to see more information")
+
+                #with col4:
+                    pie_chart_category = create_product_category_pie_chart(store_category_data)
+                    st.plotly_chart(pie_chart_category)
+

@@ -90,6 +90,10 @@ class SizeRevenue(BaseModel):
     product_revenue: float
     number_of_orders: int
 
+class TotalCustomer(BaseModel):
+    storeid: str
+    totalcustomers: int
+
 router = APIRouter()
 
 @router.on_event("startup")
@@ -592,6 +596,36 @@ async def get_store_products_category_revenue(
             "number_of_orders": product[2]
         } for product in products
     ]
+
+@router.get("/stores/customers-count", response_model=List[TotalCustomer])
+async def get_stores_customers_count(
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            s.storeid,
+            COUNT(DISTINCT c.customerid) AS TotalCustomers
+        FROM 
+            stores s
+        JOIN 
+            orders o ON s.storeID = o.storeid
+        JOIN 
+            customers c ON o.customerid = c.customerid
+        WHERE 
+            o.orderdate BETWEEN :start_date AND :end_date
+        GROUP BY 
+            s.storeid;
+    """)
+    result = await session.execute(query, {"start_date": start_date, "end_date": end_date})
+    stores = result.fetchall()
+    return [
+        {
+            "storeid": stores[0],
+            "totalcustomers": stores[1],
+        } for stores in stores
+    ]    
     
 @router.get('/stores')
 def read_root():

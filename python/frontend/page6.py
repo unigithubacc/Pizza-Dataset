@@ -160,57 +160,62 @@ def main():
     # Periodenauswahl
     period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=3)
 
-    # API-Aufrufe nur bei Änderungen von end_date oder period
-    if 'top_selling_stores' not in st.session_state or st.session_state.start_date!= start_date or st.session_state.end_date!= end_date:
-        st.session_state.start_date = start_date
-        st.session_state.end_date = end_date
-        st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        # API-Aufrufe nur bei Änderungen von end_date oder period
+        if 'top_selling_stores' not in st.session_state or st.session_state.start_date!= start_date or st.session_state.end_date!= end_date:
+            st.session_state.start_date = start_date
+            st.session_state.end_date = end_date
+            st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
 
-    top_selling_stores = st.session_state.top_selling_stores
+        top_selling_stores = st.session_state.top_selling_stores
 
-    if top_selling_stores:
-        if 'selected_store_ids' not in st.session_state:
-            st.session_state.selected_store_ids = []
-            st.session_state.selected_store_colors = []
+        if top_selling_stores:
+            if 'selected_store_ids' not in st.session_state:
+                st.session_state.selected_store_ids = []
+                st.session_state.selected_store_colors = []
 
-        # Farbpalette definieren
-        color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
-        default_color = 'lightskyblue'
+            # Farbpalette definieren
+            color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
+            default_color = 'lightskyblue'
+    
+            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+            selected_points = plotly_events(fig, click_event=True)
+            logging.debug(f"Selected points: {selected_points}")
+            
+    
+            if selected_points:
+                # Store ID aus den ausgewählten Punkten extrahieren
+                new_store_id = selected_points[0]['x']
+                if new_store_id in st.session_state.selected_store_ids:
+                    index = st.session_state.selected_store_ids.index(new_store_id)
+                    st.session_state.selected_store_ids.pop(index)
+                    st.session_state.selected_store_colors.pop(index)
+                    st.rerun()
+                else:
+                    st.session_state.selected_store_ids.append(new_store_id)
+                    st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
+                    st.rerun()
 
-        fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
-        selected_points = plotly_events(fig, click_event=True)
-        logging.debug(f"Selected points: {selected_points}")
+            # Aktualisiere das Balkendiagramm mit neuen Farben
+            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+            logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
-        if selected_points:
-            # Store ID aus den ausgewählten Punkten extrahieren
-            new_store_id = selected_points[0]['x']
-            if new_store_id in st.session_state.selected_store_ids:
-                index = st.session_state.selected_store_ids.index(new_store_id)
-                st.session_state.selected_store_ids.pop(index)
-                st.session_state.selected_store_colors.pop(index)
-                st.rerun()
-            else:
-                st.session_state.selected_store_ids.append(new_store_id)
-                st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
-                st.rerun()
+            # Auswahl des anzuzeigenden Diagramms
 
-        # Aktualisiere das Balkendiagramm mit neuen Farben
-        fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
-        logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
-
-        # Auswahl des anzuzeigenden Diagramms
-        chart_type = st.sidebar.radio("Select Chart Type", ("Revenue", "Total Sales"))
-
+    with col2:
         if st.session_state.selected_store_ids:
+            chart_type = st.sidebar.radio("Select Chart Type", ("Revenue", "Total Sales"))
             revenue_data = fetch_revenue_data(period, end_date)
             sales_data = fetch_sales_data(period, end_date)
-
+            
             if chart_type == "Revenue":
                 # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
                 prepared_revenue_data = prepare_data_for_chart(revenue_data, st.session_state.selected_store_ids, period)
                 revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(revenue_fig, use_container_width=False)
-                
+                    
             elif chart_type == "Total Sales":
                 # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
                 prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
@@ -221,5 +226,6 @@ def main():
             st.plotly_chart(empty_fig, use_container_width=False)
             st.sidebar.warning("Select store IDs to see the number of sales for those stores")
 
-    else:
-        st.error("No top selling stores data available.")
+        if not top_selling_stores:
+            st.error("No top selling stores data available.")
+
