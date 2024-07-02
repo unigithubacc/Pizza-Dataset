@@ -29,6 +29,17 @@ def fetch_revenue_data(period, end_date):
         st.error("Fehler beim Abrufen der Revenue-Daten.")
         return []
 
+# Funktion zum Abrufen der Kundenanzahl-Daten für Stores
+@st.cache_data
+def fetch_customers_count(start_date, end_date):
+    response = requests.get(f'http://localhost:8000/stores/customers-count?start_date={start_date}&end_date={end_date}')
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        st.error("Fehler beim Abrufen der Kundenanzahl-Daten.")
+        return []
+
 # Funktion zum Abrufen der Verkaufsdaten (Total Sales)
 @st.cache_data
 def fetch_sales_data(period, end_date):
@@ -84,7 +95,6 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
                       xaxis_title='Store ID',
                       yaxis_title='Revenue in $',
                       clickmode='event',
-                      width=800,
                       height=400)
 
     return fig
@@ -152,6 +162,20 @@ def create_empty_line_chart():
                       height=400)
     return fig
 
+# Funktion zum Erstellen eines Kreisdiagramms
+def create_customers_pie_chart(data, selected_store_ids, selected_store_colors):
+    selected_data = [item for item in data if item['storeid'] in selected_store_ids]
+    
+    labels = [f"Store {item['storeid']}" for item in selected_data]
+    values = [item['totalcustomers'] for item in selected_data]
+    colors = [selected_store_colors[selected_store_ids.index(item['storeid'])] for item in selected_data]
+
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.3, marker=dict(colors=colors))])
+    fig.update_layout(title_text="Customers per Store")
+
+    return fig
+
+# Hauptfunktion
 def main():
     # Datumseingabe
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
@@ -164,7 +188,7 @@ def main():
     
     with col1:
         # API-Aufrufe nur bei Änderungen von end_date oder period
-        if 'top_selling_stores' not in st.session_state or st.session_state.start_date!= start_date or st.session_state.end_date!= end_date:
+        if 'top_selling_stores' not in st.session_state or st.session_state.start_date != start_date or st.session_state.end_date != end_date:
             st.session_state.start_date = start_date
             st.session_state.end_date = end_date
             st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
@@ -184,7 +208,6 @@ def main():
             selected_points = plotly_events(fig, click_event=True)
             logging.debug(f"Selected points: {selected_points}")
             
-    
             if selected_points:
                 # Store ID aus den ausgewählten Punkten extrahieren
                 new_store_id = selected_points[0]['x']
@@ -207,20 +230,28 @@ def main():
     with col2:
         if st.session_state.selected_store_ids:
             chart_type = st.sidebar.radio("Select Chart Type", ("Revenue", "Total Sales"))
-            revenue_data = fetch_revenue_data(period, end_date)
-            sales_data = fetch_sales_data(period, end_date)
-            
+
             if chart_type == "Revenue":
-                # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
+                revenue_data = fetch_revenue_data(period, end_date)
                 prepared_revenue_data = prepare_data_for_chart(revenue_data, st.session_state.selected_store_ids, period)
                 revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(revenue_fig, use_container_width=False)
-                    
+                
+                chart_type == "Customers"
+                customers_count_data = fetch_customers_count(start_date, end_date)
+                customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
+                st.plotly_chart(customers_pie_fig, use_container_width=False)
+                
             elif chart_type == "Total Sales":
-                # Vorbereiten der Daten, um den ersten Tag für jede storeID zu ignorieren
+                sales_data = fetch_sales_data(period, end_date)
                 prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
                 sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(sales_fig, use_container_width=False)
+
+                chart_type == "Customers"
+                customers_count_data = fetch_customers_count(start_date, end_date)
+                customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
+                st.plotly_chart(customers_pie_fig, use_container_width=False)
         else:
             empty_fig = create_empty_line_chart()
             st.plotly_chart(empty_fig, use_container_width=False)
