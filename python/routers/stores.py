@@ -80,6 +80,16 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
+class CategoryRevenue(BaseModel):
+    category: str
+    product_revenue: float
+    number_of_orders: int
+
+class SizeRevenue(BaseModel):
+    size: str
+    product_revenue: float
+    number_of_orders: int
+
 router = APIRouter()
 
 @router.on_event("startup")
@@ -500,6 +510,88 @@ async def get_store_products_revenue(
         ]
     
     return response_data
+
+@router.get("/store-products-category-revenue", response_model=List[CategoryRevenue])
+async def get_store_products_category_revenue(
+    storeid: str,
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            p.category,
+            SUM(o.total) AS product_revenue,
+            COUNT(oi.orderid) AS number_of_orders
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderid = oi.orderid
+        JOIN 
+            products p ON oi.sku = p.sku
+        JOIN 
+            stores s ON o.storeid = s.storeid
+        WHERE 
+            s.storeid = :storeid
+        GROUP BY 
+            p.category
+        ORDER BY 
+            product_revenue DESC;
+    """)
+    result = await session.execute(query, {
+        "storeid": storeid,
+        "start_date": start_date,
+        "end_date": end_date
+    })
+    products = result.fetchall()
+    return [
+        {
+            "category": product[0],
+            "product_revenue": product[1],
+            "number_of_orders": product[2]
+        } for product in products
+    ]
+
+@router.get("/store-products-size-revenue", response_model=List[SizeRevenue])
+async def get_store_products_category_revenue(
+    storeid: str,
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            p.size,
+            SUM(o.total) AS product_revenue,
+            COUNT(oi.orderid) AS number_of_orders
+        FROM 
+            orders o
+        JOIN 
+            order_items oi ON o.orderid = oi.orderid
+        JOIN 
+            products p ON oi.sku = p.sku
+        JOIN 
+            stores s ON o.storeid = s.storeid
+        WHERE 
+            s.storeid = :storeid
+        GROUP BY 
+            p.size
+        ORDER BY 
+            product_revenue DESC;
+    """)
+    result = await session.execute(query, {
+        "storeid": storeid,
+        "start_date": start_date,
+        "end_date": end_date
+    })
+    products = result.fetchall()
+    return [
+        {
+            "size": product[0],
+            "product_revenue": product[1],
+            "number_of_orders": product[2]
+        } for product in products
+    ]
     
 @router.get('/stores')
 def read_root():
