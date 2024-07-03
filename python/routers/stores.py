@@ -94,6 +94,11 @@ class TotalCustomer(BaseModel):
     storeid: str
     totalcustomers: int
 
+class ProductCount(BaseModel):
+    product1: str
+    product2: str
+    avgfrequencyperorder: float
+
 router = APIRouter()
 
 @router.on_event("startup")
@@ -626,7 +631,56 @@ async def get_stores_customers_count(
             "totalcustomers": stores[1],
         } for stores in stores
     ]    
-    
+
+@router.get("/products/frequency", response_model=List[ProductCount])
+async def get_products_frequency(
+    storeid: str,
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        WITH product_orders AS (
+            SELECT p1.Name AS Product1,
+                p2.Name AS Product2,
+                oi1.orderid
+            FROM order_items oi1
+            JOIN order_items oi2 ON oi1.orderid = oi2.orderid AND oi1.sku < oi2.sku
+            JOIN products p1 ON oi1.sku = p1.sku
+            JOIN products p2 ON oi2.sku = p2.sku
+            JOIN orders o ON oi1.orderid = o.orderID
+            WHERE o.storeid = :storeid
+            AND o.orderdate BETWEEN :start_date AND :end_date
+        ),
+        total_product_orders AS (
+            SELECT Product1,
+                COUNT(DISTINCT orderid) AS TotalOrders
+            FROM product_orders
+            GROUP BY Product1
+        )
+        SELECT po.Product1,
+            po.Product2,
+            COUNT(po.orderid) AS Frequency,
+            tpo.TotalOrders,
+            ROUND((COUNT(po.orderid) * 1.0 / tpo.TotalOrders), 3) AS AvgFrequencyPerOrder
+        FROM product_orders po
+        JOIN total_product_orders tpo ON po.Product1 = tpo.Product1
+        GROUP BY po.Product1, po.Product2, tpo.TotalOrders
+        ORDER BY product1, product2 DESC;
+    """)
+    result = await session.execute(query, {"storeid": storeid, "start_date": start_date, "end_date": end_date})
+    rows = result.fetchall()
+
+    # Correctly iterating over the stores list and constructing dictionaries
+    return [
+        {
+            "product1": row[0],
+            "product2": row[1],
+            "avgfrequencyperorder": row[4]
+        }
+        for row in rows
+    ]
+
 @router.get('/stores')
 def read_root():
     return {"Hello": "World123"}

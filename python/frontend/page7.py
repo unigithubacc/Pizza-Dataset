@@ -4,6 +4,20 @@ import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 from datetime import date
 
+@st.cache_data
+def fetch_product_frequency(store_id, start_date, end_date):
+    response = requests.get(f'http://localhost:8000/products/frequency', params={
+        'storeid': store_id,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        st.error("Fehler beim Abrufen der Daten.")
+        return []
+
 # Funktion zum Abrufen der Top-Selling-Stores-Daten
 @st.cache_data
 def fetch_top_selling_stores(start_date, end_date):
@@ -71,6 +85,7 @@ def create_store_bar_chart2(data):
                       xaxis_title='Store ID',
                       yaxis_title='Total Revenue in $',
                       clickmode='event+select',
+                      height=445,
                       )
 
     return fig2
@@ -132,6 +147,41 @@ def create_product_size_pie_chart(data):
 
     return fig
 
+def create_heatmap(data):
+    product1_names = [item['product1'] for item in data]
+    product2_names = [item['product2'] for item in data]
+    frequency = [item['avgfrequencyperorder'] for item in data]
+
+    unique_products = sorted(set(product1_names + product2_names))
+    product_index = {product: idx for idx, product in enumerate(unique_products)}
+
+    heatmap_data = {
+        'x': [product_index[p1] for p1 in product1_names],
+        'y': [product_index[p2] for p2 in product2_names],
+        'z': frequency,
+        'type': 'heatmap',
+        'colorscale': 'reds',
+        'showscale': True,
+    }
+
+    layout = {
+        'title': 'Combination Frequency of Product2 in Orders Following Purchase of Product1',
+        'xaxis': {
+            'tickvals': list(product_index.values()),
+            'ticktext': list(product_index.keys()),
+            'title': 'Product 1'
+        },
+        'yaxis': {
+            'tickvals': list(product_index.values()),
+            'ticktext': list(product_index.keys()),
+            'title': 'Product 2'
+        }
+    }
+
+    fig = go.Figure(data=[heatmap_data], layout=layout)
+    return fig
+
+
 def main():
     # Initialisierung von session_state
     if 'selected_store_id' not in st.session_state:
@@ -161,6 +211,12 @@ def main():
             if store_product_data:
                 fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
                 st.plotly_chart(fig)
+
+            product_frequency_data = fetch_product_frequency(selected_store_id, start_date, end_date)
+            if product_frequency_data:
+                fig_heatmap = create_heatmap(product_frequency_data)
+                st.plotly_chart(fig_heatmap)
+                
         else:
             st.sidebar.warning("Select store IDs to see the number of sales for those stores")
             

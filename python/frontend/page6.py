@@ -190,11 +190,15 @@ def create_store_map(selected_store_ids, width='100%', height=500):
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
 
+    # Geografische Zentren von Kalifornien, Nevada und Arizona
+    center_coords = [(37.7749, -122.4194), (39.8283, -119.8173), (36.1699, -111.8901)]  # Kalifornien, Nevada, Arizona
+    # Wählen Sie das erste Koordinatensystem aus, wenn keine ausgewählten Stores vorhanden sind
+    if not selected_stores:
+        avg_lat, avg_lon = center_coords[0]
+
     if selected_stores:
         avg_lat = sum([store['latitude'] for store in selected_stores]) / len(selected_stores)
         avg_lon = sum([store['longitude'] for store in selected_stores]) / len(selected_stores)
-    else:
-        avg_lat, avg_lon = 0, 0
 
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
 
@@ -203,7 +207,7 @@ def create_store_map(selected_store_ids, width='100%', height=500):
         folium.Marker(
             location=[store['latitude'], store['longitude']],
             popup=store_popup,
-            icon=folium.Icon(color='red', icon='home', prefix='fa')
+            icon=folium.Icon(color='red', icon='store', prefix='fa')
         ).add_to(m)
 
     return m

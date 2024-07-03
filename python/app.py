@@ -9,7 +9,7 @@ from frontend.page7 import main as page7_main
 from frontend.page8 import main as page8_main
 from navigation import render_navbar, close_navbar
 
-st.set_page_config(page_title="Pizza Data Manager", page_icon=":material/local_pizza:", layout="wide")   # Setzen Sie hier das Layout auf "wide"
+st.set_page_config(page_title="Shop Analytics", page_icon=":material/local_pizza:", layout="wide")   # Setzen Sie hier das Layout auf "wide"
 
 # Lade die CSS-Datei
 def load_css():
@@ -67,9 +67,9 @@ def load_css():
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
     "Products": page1_main,
-    "Store": page2_main,
-    "Store/Multi Store View": page6_main,
-    "Store/Single Store View": page7_main,
+    "Store Overview": page2_main,
+    "Store/Multiple": page6_main,
+    "Store/Single": page7_main,
     "Store/Repeat Customer": page8_main,
     "Customers": page3_main,
     "Dynamische Datenfilterung": page4_main,
@@ -79,9 +79,9 @@ PAGES = {
 # Icons für die Seiten
 ICONS = {
     "Products": "🛒",
-    "Store": "🏪",
-    "Store/Multi Store View": "",
-    "Store/Single Store View": "",
+    "Store Overview": "🏪",
+    "Store/Multiple": "",
+    "Store/Single": "",
     "Store/Repeat Customer": "",
     "Customers": "👥",
     "Dynamische Datenfilterung": "📊",
@@ -92,7 +92,7 @@ ICONS = {
 load_css()
 
 # URL-Parameter auslesen
-page_param = st.query_params.get('page', 'Store/Multi Store View')
+page_param = st.query_params.get('page', 'Store/Multiple')
 
 # Sidebar Navigation
 #st.sidebar.title("Navigation")
@@ -101,15 +101,15 @@ page_param = st.query_params.get('page', 'Store/Multi Store View')
 selection = None
 
 # Hauptseiten
-main_pages = [ "Store", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+main_pages = [ "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
 for page in main_pages:
-    if page == "Store":
-        store_expanded = st.sidebar.expander("🏪 Store", expanded=page_param.startswith("Store"))
+    if page == "Store Overview":
+        store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=page_param.startswith("Store Overview"))
         with store_expanded:
-            if st.button("Multi Store View", key="Store/Multi Store View", help="Store/Multi Store View", use_container_width=True):
-                selection = "Store/Multi Store View"
-            if st.button("Single Store View", key="Store/Single Store View", help="Store/Single Store View", use_container_width=True):
-                selection = "Store/Single Store View"
+            if st.button("Multiple", key="Store/Multiple", help="Store/Multiple", use_container_width=True):
+                selection = "Store/Multiple"
+            if st.button("Single", key="Store/Single", help="Store/Single", use_container_width=True):
+                selection = "Store/Single"
             if st.button("Repeat Customer", key="Store/Repeat Customer", help="Store/Repeat Customer", use_container_width=True):
                 selection = "Store/Repeat Customer"
     else:
@@ -118,7 +118,7 @@ for page in main_pages:
 
 # Wenn keine Seite ausgewählt wurde, wähle die Standardseite
 if not selection:
-    selection = page_param if page_param in PAGES else 'Store/Multi Store View'
+    selection = page_param if page_param in PAGES else 'Store/Multiple'
 
 # Setze URL-Parameter basierend auf der Auswahl in der Sidebar
 st.query_params.page = selection
