@@ -4,6 +4,7 @@ import plotly.express as px
 import numpy as np
 import requests
 
+@st.cache_data
 def fetch_data(min_order_count):
     url = f"http://localhost:8000/repeat-customers-report/?min_order_count={min_order_count}"
     response = requests.get(url)
@@ -13,16 +14,7 @@ def fetch_data(min_order_count):
         st.error("Fehler beim Abrufen der Daten")
         return []
 
-def main():
-    st.write("Willkommen zur Kundenreport-Seite!")
-    st.write("Hier finden Sie Informationen über unsere wiederkehrenden Kunden.")
-
-    # Füge ein Eingabefeld für min_order_count hinzu
-    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=0, value=1)
-
-    # Daten abrufen mit dem angegebenen min_order_count
-    data = fetch_data(min_order_count)
-
+def generate_heatmap(data):
     if data:
         df = pd.DataFrame(data)
 
@@ -64,6 +56,23 @@ def main():
                         labels=dict(x="Store ID", y="Total Customers", color="% Repeat Rate"),
                         x=df['storeid'].unique(),
                         y=labels_reversed,
+                        title='Returning Customer Heatmap',
                         color_continuous_scale="Viridis")
 
-        st.plotly_chart(fig)
+        return fig
+    else:
+        return None
+
+def main():
+    # Add an input field for min_order_count
+    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=0, value=1)
+
+    # Fetch data based on the specified min_order_count
+    data = fetch_data(min_order_count)
+
+    if data:
+        fig = generate_heatmap(data)
+        if fig:
+            st.plotly_chart(fig)
+        else:
+            st.warning("No data to display for the selected criteria.")

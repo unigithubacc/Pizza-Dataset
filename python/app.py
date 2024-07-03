@@ -7,6 +7,7 @@ from frontend.page5 import main as page5_main
 from frontend.page6 import main as page6_main
 from frontend.page7 import main as page7_main
 from frontend.page8 import main as page8_main
+from frontend.page9 import main as page9_main
 from navigation import render_navbar, close_navbar
 
 st.set_page_config(page_title="Shop Analytics", page_icon=":material/local_pizza:", layout="wide")   # Setzen Sie hier das Layout auf "wide"
@@ -66,6 +67,7 @@ def load_css():
 
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
+    "Homepage":page9_main,
     "Products": page1_main,
     "Store Overview": page2_main,
     "Store/Multiple": page6_main,
@@ -78,6 +80,7 @@ PAGES = {
 
 # Icons für die Seiten
 ICONS = {
+    "Homepage": "🏛️",
     "Products": "🛒",
     "Store Overview": "🏪",
     "Store/Multiple": "",
@@ -92,7 +95,7 @@ ICONS = {
 load_css()
 
 # URL-Parameter auslesen
-page_param = st.query_params.get('page', 'Store/Multiple')
+page_param = st.query_params.get('page', 'Homepage')
 
 # Sidebar Navigation
 #st.sidebar.title("Navigation")
@@ -101,7 +104,7 @@ page_param = st.query_params.get('page', 'Store/Multiple')
 selection = None
 
 # Hauptseiten
-main_pages = [ "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+main_pages = [ "Homepage", "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
 for page in main_pages:
     if page == "Store Overview":
         store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=page_param.startswith("Store Overview"))
@@ -118,7 +121,7 @@ for page in main_pages:
 
 # Wenn keine Seite ausgewählt wurde, wähle die Standardseite
 if not selection:
-    selection = page_param if page_param in PAGES else 'Store/Multiple'
+    selection = page_param if page_param in PAGES else 'Homepage'
 
 # Setze URL-Parameter basierend auf der Auswahl in der Sidebar
 st.query_params.page = selection
