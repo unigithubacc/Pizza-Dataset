@@ -199,11 +199,11 @@ def main():
         if stores_data:
             fig2 = create_store_bar_chart2(stores_data)
             selected_points = plotly_events(fig2, click_event=True)
-            st.write(f"Selected Store ID: {st.session_state.selected_store_id}")
             
             if selected_points:
                 st.session_state.selected_store_id = selected_points[0]['x']
-
+                st.query_params.update(storeid=st.session_state.selected_store_id)
+                st.write(f"Selected Store ID: {st.session_state.selected_store_id}")
     with col2:
         if st.session_state.selected_store_id is not None:
             selected_store_id = st.session_state.selected_store_id
