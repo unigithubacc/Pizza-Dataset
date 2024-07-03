@@ -10,7 +10,7 @@ from frontend.page8 import main as page8_main
 from frontend.page9 import main as page9_main
 from navigation import render_navbar, close_navbar
 
-st.set_page_config(page_title="Shop Analytics", page_icon=":material/local_pizza:", layout="wide")   # Setzen Sie hier das Layout auf "wide"
+st.set_page_config(page_title="Shop Analytics", page_icon=":material/local_pizza:", layout="wide")
 
 # Lade die CSS-Datei
 def load_css():
@@ -67,7 +67,7 @@ def load_css():
 
 # Dictionary, das die Seiten-Funktionen speichert
 PAGES = {
-    "Homepage":page9_main,
+    "Homepage": page9_main,
     "Products": page1_main,
     "Store Overview": page2_main,
     "Store/Multiple": page6_main,
@@ -94,40 +94,53 @@ ICONS = {
 # CSS laden
 load_css()
 
-# URL-Parameter auslesen
-page_param = st.query_params.get('page', 'Homepage')
+# URL-Parameter auslesen und initialisieren
+query_params = st.query_params
+page_param = query_params.get('page', 'Homepage')
+storeid_param = query_params.get('storeid', '')
+
+if 'page' not in st.session_state:
+    st.session_state.page = page_param
+
+if 'storeid' not in st.session_state:
+    st.session_state.storeid = storeid_param
 
 # Sidebar Navigation
-#st.sidebar.title("Navigation")
-
-# Füge Buttons für jede Seite hinzu und speichere die Auswahl
 selection = None
 
 # Hauptseiten
-main_pages = [ "Homepage", "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+main_pages = ["Homepage", "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
 for page in main_pages:
     if page == "Store Overview":
-        store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=page_param.startswith("Store Overview"))
+        store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=st.session_state.page.startswith("Store Overview"))
         with store_expanded:
             if st.button("Multiple", key="Store/Multiple", help="Store/Multiple", use_container_width=True):
+                st.session_state.page = "Store/Multiple"
                 selection = "Store/Multiple"
             if st.button("Single", key="Store/Single", help="Store/Single", use_container_width=True):
+                st.session_state.page = "Store/Single"
                 selection = "Store/Single"
             if st.button("Repeat Customer", key="Store/Repeat Customer", help="Store/Repeat Customer", use_container_width=True):
+                st.session_state.page = "Store/Repeat Customer"
                 selection = "Store/Repeat Customer"
     else:
         if st.sidebar.button(f"{ICONS[page]} {page}", key=page, help=page, use_container_width=True):
+            st.session_state.page = page
             selection = page
 
 # Wenn keine Seite ausgewählt wurde, wähle die Standardseite
 if not selection:
-    selection = page_param if page_param in PAGES else 'Homepage'
+    selection = st.session_state.page if st.session_state.page in PAGES else 'Homepage'
 
-# Setze URL-Parameter basierend auf der Auswahl in der Sidebar
-st.query_params.page = selection
-
-# Navigation rendern und Auswahl speichern
-# render_navbar("Pizza shop analysis tool", list(PAGES.keys()), selection)
+# Store ID eingeben (falls auf "Store/Single" Seite)
+if selection == "Store/Single":
+    st.session_state.storeid = st.sidebar.text_input("Enter Store ID", st.session_state.storeid)
+    if st.session_state.storeid:
+        st.query_params.update({'page': selection, 'storeid': st.session_state.storeid})
+    else:
+        st.query_params.update({'page': selection})
+else:
+    st.query_params.update({'page': selection})
 
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]

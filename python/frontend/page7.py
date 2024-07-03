@@ -18,7 +18,6 @@ def fetch_product_frequency(store_id, start_date, end_date):
         st.error("Fehler beim Abrufen der Daten.")
         return []
 
-# Funktion zum Abrufen der Top-Selling-Stores-Daten
 @st.cache_data
 def fetch_top_selling_stores(start_date, end_date):
     response = requests.get(f'http://localhost:8000/top-selling-stores?start_date={start_date}&end_date={end_date}')
@@ -59,7 +58,6 @@ def fetch_products_category(store_id, start_date, end_date):
         st.error("Fehler beim Abrufen der Daten.")
         return []
 
-# Function to create bar chart for top-selling stores
 def create_store_bar_chart2(data):
     store_ids = sorted(set([item['storeid'] for item in data]))
     total_revenue = {store_id: sum(item['TotalRevenue'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
@@ -90,7 +88,6 @@ def create_store_bar_chart2(data):
 
     return fig2
 
-# Function to create bar chart for store product revenue
 def create_product_revenue_bar_chart(data, divide_by_size):
     product_names = [product['name'] for product in data]
     product_revenues = [product['product_revenue'] for product in data]
@@ -121,7 +118,6 @@ def create_product_revenue_bar_chart(data, divide_by_size):
 
     return fig
 
-# Function to create pie chart for product categories
 def create_product_category_pie_chart(data):
     category_names = [category['category'] for category in data]
     category_revenues = [category['product_revenue'] for category in data]
@@ -134,7 +130,6 @@ def create_product_category_pie_chart(data):
 
     return fig
 
-# Function to create pie chart for product sizes
 def create_product_size_pie_chart(data):
     size_names = [size['size'] for size in data]
     size_revenues = [size['product_revenue'] for size in data]
@@ -181,11 +176,16 @@ def create_heatmap(data):
     fig = go.Figure(data=[heatmap_data], layout=layout)
     return fig
 
-
 def main():
-    # Initialisierung von session_state
+    query_params = st.query_params
+    store_id_from_url = query_params.get("storeid", None)
+
     if 'selected_store_id' not in st.session_state:
-        st.session_state.selected_store_id = None
+        st.session_state.selected_store_id = store_id_from_url
+
+    # Überwache Änderungen an der storeid in der URL und aktualisiere session_state
+    if store_id_from_url and store_id_from_url != st.session_state.selected_store_id:
+        st.session_state.selected_store_id = store_id_from_url
 
     start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
@@ -220,18 +220,15 @@ def main():
         else:
             st.sidebar.warning("Select store IDs to see the number of sales for those stores")
             
-    with col3:        # Fetch and display product category pie chart
+    with col3:
         if st.session_state.selected_store_id is not None:
             store_category_data = fetch_products_category(selected_store_id, start_date, end_date)
             store_size_data = fetch_products_size(selected_store_id, start_date, end_date)
             
             if store_category_data and store_size_data:
-                #col3, col4 = st.columns(2)
-               # with col3:
-                    pie_chart_size = create_product_size_pie_chart(store_size_data)
-                    st.plotly_chart(pie_chart_size)
+                pie_chart_size = create_product_size_pie_chart(store_size_data)
+                st.plotly_chart(pie_chart_size)
 
-                #with col4:
-                    pie_chart_category = create_product_category_pie_chart(store_category_data)
-                    st.plotly_chart(pie_chart_category)
+                pie_chart_category = create_product_category_pie_chart(store_category_data)
+                st.plotly_chart(pie_chart_category)
 
