@@ -6,6 +6,7 @@ from streamlit_plotly_events import plotly_events
 import folium
 from streamlit_folium import folium_static
 from datetime import date
+import webbrowser
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -181,8 +182,16 @@ def create_customers_pie_chart(data, selected_store_ids, selected_store_colors):
     values = [item['totalcustomers'] for item in selected_data]
     colors = [selected_store_colors[selected_store_ids.index(item['storeid'])] for item in selected_data]
 
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.3, marker=dict(colors=colors))])
+
+    customdata = [item['storeid'] for item in selected_data]  # Store-IDs in customdata hinzufügen
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.3, marker=dict(colors=colors), customdata=customdata)])
     fig.update_layout(title_text="Customers per Store")
+
+    fig.update_traces(customdata=[item['storeid'] for item in selected_data], 
+                      hoverinfo='label+percent', 
+                      textinfo='value+percent', 
+                      textposition='inside',
+                      textfont_size=15)
 
     return fig
 
@@ -278,7 +287,14 @@ def main():
                 chart_type == "Customers"
                 customers_count_data = fetch_customers_count(start_date, end_date)
                 customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
-                st.plotly_chart(customers_pie_fig, use_container_width=False)
+                selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
+                if selected_points:
+                    point_index = selected_points[0]['pointNumber'] 
+                    store_id = customers_pie_fig.data[0].customdata[point_index] 
+                    #store_id = selected_points[0]['pointNumber']  # Extrahiere Store-ID aus customdata
+                    url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"
+                    webbrowser.open_new_tab(url)
+
                 
             elif chart_type == "Total Sales":
                 sales_data = fetch_sales_data(period, end_date)
@@ -297,4 +313,3 @@ def main():
 
         if not top_selling_stores:
             st.error("No top selling stores data available.")
-
