@@ -84,6 +84,7 @@ def create_store_bar_chart2(data):
                       yaxis_title='Total Revenue in $',
                       clickmode='event+select',
                       height=445,
+                      width=640
                       )
 
     return fig2

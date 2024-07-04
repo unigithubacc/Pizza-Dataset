@@ -188,7 +188,7 @@ def create_customers_pie_chart(data, selected_store_ids, selected_store_colors):
     fig.update_layout(title_text="Customers per Store")
 
     fig.update_traces(customdata=[item['storeid'] for item in selected_data], 
-                      hoverinfo='label+percent', 
+                      hoverinfo='value+label+percent', 
                       textinfo='value+percent', 
                       textposition='inside',
                       textfont_size=15)
@@ -228,7 +228,7 @@ def main():
     end_date = st.sidebar.date_input("End Date", value=date(2023, 1, 1))
 
     # Periodenauswahl
-    period = st.sidebar.selectbox("Select Period", ["Day", "Month", "Quarter", "Year"], index=2)
+    period = st.sidebar.selectbox("Select Linechart View", ["Day", "Month", "Quarter", "Year"], index=2)
 
     col1, col2 = st.columns([1, 1])
     
