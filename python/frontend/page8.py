@@ -18,8 +18,8 @@ def generate_heatmap(data):
     if data:
         df = pd.DataFrame(data)
 
-        bins = [0, 500, 600, 700, 800, 900, 1000, 1200, 1400]
-        labels = ['0-500', '500-600', '600-700', '700-800', '800-900', '900-1000', '1000-1200', '1200-1400']
+        bins = [0, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1500]
+        labels = ['0-500', '500-600', '600-700', '700-800', '800-900', '900-1000', '1000-1200', '1200-1400', '1400-1500']
         df['customer_range'] = pd.cut(df['total_customers'], bins=bins, labels=labels)
 
         # Ensure all possible values are handled
