@@ -289,9 +289,9 @@ def main():
                 customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
                 selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
                 if selected_points:
+                    print(selected_points)
                     point_index = selected_points[0]['pointNumber'] 
                     store_id = customers_pie_fig.data[0].customdata[point_index] 
-                    #store_id = selected_points[0]['pointNumber']  # Extrahiere Store-ID aus customdata
                     url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"
                     webbrowser.open_new_tab(url)
 
@@ -305,7 +305,13 @@ def main():
                 chart_type == "Customers"
                 customers_count_data = fetch_customers_count(start_date, end_date)
                 customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
-                st.plotly_chart(customers_pie_fig, use_container_width=False)
+                selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
+                if selected_points:
+                    print(selected_points)
+                    point_index = selected_points[0]['pointNumber'] 
+                    store_id = customers_pie_fig.data[0].customdata[point_index] 
+                    url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"
+                    webbrowser.open_new_tab(url)
         else:
             empty_fig = create_empty_line_chart()
             st.plotly_chart(empty_fig, use_container_width=False)
