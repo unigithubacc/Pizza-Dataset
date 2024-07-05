@@ -196,7 +196,20 @@ def create_customers_pie_chart(data, selected_store_ids, selected_store_colors):
 
     return fig
 
-def create_store_map(selected_store_ids, width='100%', height=500):
+# Legende für Farben
+color_legend = {
+    '#e41a1c': 'red',
+    '#377eb8': 'blue',
+    '#4daf4a': 'green',
+    '#984ea3': 'purple',
+    '#ff7f00': 'beige',
+    '#ffff33': 'lightgreen',
+    '#a65628': 'orange',
+    '#f781bf': 'pink'
+}
+
+# Funktion zum Erstellen einer Karte mit Store-Standorten
+def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500):
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
 
@@ -213,11 +226,13 @@ def create_store_map(selected_store_ids, width='100%', height=500):
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
 
     for store in selected_stores:
+        store_index = selected_store_ids.index(store['storeID'])
+        marker_color = color_legend[selected_store_colors[store_index]]
         store_popup = f"Store ID: {store['storeID']}<br>City: {store['city']}<br>State: {store['state']}"
         folium.Marker(
             location=[store['latitude'], store['longitude']],
             popup=store_popup,
-            icon=folium.Icon(color='red', icon='store', prefix='fa')
+            icon=folium.Icon(color=marker_color, icon='store', prefix='fa')
         ).add_to(m)
 
     return m
@@ -292,7 +307,7 @@ def main():
                 revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(revenue_fig, use_container_width=False)
                 
-                store_map = create_store_map(st.session_state.selected_store_ids, width='100%', height=500)
+                store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
                 folium_static(store_map, width=700, height=350)
                 
             elif chart_type == "Total Sales":
@@ -301,7 +316,7 @@ def main():
                 sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(sales_fig, use_container_width=False)
                 
-                store_map = create_store_map(st.session_state.selected_store_ids, width='100%', height=500)
+                store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
                 folium_static(store_map, width=700, height=350)
 
         else:
@@ -311,3 +326,6 @@ def main():
 
         if not top_selling_stores:
             st.error("No top selling stores data available.")
+
+if __name__ == "__main__":
+    main()
