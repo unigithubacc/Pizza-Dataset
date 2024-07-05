@@ -124,19 +124,20 @@ async def get_top_selling_stores(
     query = text("""
         SELECT
             stores.storeID,
-            SUM(orders.total) AS TotalRevenue
+            SUM(orders.total) AS TotalRevenue,
+            COUNT(DISTINCT orders.customerID) AS CustomerCount
         FROM public.stores
         INNER JOIN public.orders ON stores.storeID = orders.storeID
         WHERE orders.orderdate BETWEEN :start_date AND :end_date
-        GROUP BY stores.storeID
-        ORDER BY TotalRevenue DESC;
+        GROUP BY stores.storeID;
     """)
     result = await session.execute(query, {"start_date": start_date, "end_date": end_date})
     stores = result.fetchall()
     return [
         {
             "storeid": store[0],
-            "TotalRevenue": store[1]
+            "TotalRevenue": store[1],
+            "CustomerCount": store[2]
         } for store in stores
     ]
 

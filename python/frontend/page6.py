@@ -79,37 +79,51 @@ def prepare_data_for_chart(data, store_ids, period):
             prepared_data.extend(filtered_data)
     return prepared_data
 
-# Funktion zum Erstellen eines Balkendiagramms
-def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color):
-    store_ids = sorted(set([item['storeid'] for item in data]))
-    total_revenue = {store_id: next(item['TotalRevenue'] for item in data if item['storeid'] == store_id) for store_id in store_ids}
+@st.experimental_fragment
+def create_store_bar_chart(data, selected_store_ids, selected_store_colors, default_color, sort_by_customers):
+    # Sammeln Sie die TotalRevenue- und CustomerCount-Daten für jeden Store
+    store_data = {}
+    for item in data:
+        store_id = item['storeid']
+        if store_id not in store_data:
+            store_data[store_id] = {'TotalRevenue': 0, 'CustomerCount': 0}
+        store_data[store_id]['TotalRevenue'] += item['TotalRevenue']
+        store_data[store_id]['CustomerCount'] += item['CustomerCount']
+    
+    # Sortieren Sie die Stores basierend auf dem ausgewählten Kriterium
+    if sort_by_customers:
+        sorted_store_ids = sorted(store_data.keys(), key=lambda x: store_data[x]['CustomerCount'], reverse=True)
+    else:
+        sorted_store_ids = sorted(store_data.keys(), key=lambda x: store_data[x]['TotalRevenue'], reverse=True)
 
-    sorted_store_ids = sorted(total_revenue.keys(), key=lambda x: total_revenue[x], reverse=True)
-
+    # Erstellen Sie das Balkendiagramm
     fig = go.Figure()
+    
 
     for store_id in sorted_store_ids:
         marker_color = selected_store_colors[selected_store_ids.index(store_id)] if store_id in selected_store_ids else default_color
         fig.add_trace(go.Bar(
             x=[store_id],
-            y=[total_revenue[store_id]],
+            y=[store_data[store_id]['TotalRevenue'] if sort_by_customers else store_data[store_id]['TotalRevenue']],
             name=f'Store {store_id}',
             legendgroup=f'Store {store_id}',
             showlegend=True,
             marker_color=marker_color,
             customdata=[store_id],
-            hoverinfo='x+y',
+            hoverinfo='all',
             selectedpoints=None  # Ensure no selection highlighting
         ))
 
     fig.update_layout(barmode='group',
                       title='Top Selling Stores',
                       xaxis_title='Store ID',
-                      yaxis_title='Revenue in $',
+                      yaxis_title='Revenue in $' if sort_by_customers else 'Revenue in $',
                       clickmode='event',
                       height=400)
 
     return fig
+
+
 
 # Funktion zum Erstellen eines Liniendiagramms für Revenue
 def create_revenue_line_chart(data, store_ids, store_colors, period):
@@ -209,6 +223,7 @@ color_legend = {
 }
 
 # Funktion zum Erstellen einer Karte mit Store-Standorten
+@st.experimental_fragment
 def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500):
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
@@ -246,6 +261,8 @@ def main():
     # Periodenauswahl
     period = st.sidebar.selectbox("Select Linechart View", ["Day", "Month", "Quarter", "Year"], index=2)
 
+    sort_by_customers = st.sidebar.checkbox("Sort by Customers Count")
+    
     col1, col2 = st.columns([1, 1])
     
     with col1:
@@ -254,7 +271,7 @@ def main():
             st.session_state.start_date = start_date
             st.session_state.end_date = end_date
             st.session_state.top_selling_stores = fetch_top_selling_stores(start_date, end_date)
-
+            
         top_selling_stores = st.session_state.top_selling_stores
 
         if top_selling_stores:
@@ -266,7 +283,8 @@ def main():
             color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
             default_color = 'lightskyblue'
     
-            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
+
             selected_points = plotly_events(fig, click_event=True)
             logging.debug(f"Selected points: {selected_points}")
             
@@ -284,7 +302,7 @@ def main():
                     st.rerun()
 
             # Aktualisiere das Balkendiagramm mit neuen Farben
-            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color)
+            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
             logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
             customers_count_data = fetch_customers_count(start_date, end_date)
@@ -327,5 +345,3 @@ def main():
         if not top_selling_stores:
             st.error("No top selling stores data available.")
 
-if __name__ == "__main__":
-    main()

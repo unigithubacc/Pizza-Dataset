@@ -1,15 +1,22 @@
 [theme]
-primaryColor = "#f63366"
+base = "light"
+# primaryColor = "#f63366"
 # backgroundColor = "#0f1117"
-backgroundColor = "#0f1117"
+# backgroundColor = "#0f1117"
 # secondaryBackgroundColor = "#27262f"
-secondaryBackgroundColor = "#27262f"
-textColor = "#fafafa"
-font = "sans serif"
+# secondaryBackgroundColor = "#27262f"
+# textColor = "#fafafa"
+# font = "sans serif"
 
 [server]
 enableStaticServing = true
 runOnSave = true
+port = 8501
 
 [client]
 showSidebarNavigation = false
+
+[browser]
+serverAddress = "localhost"
+gatherUsageStats = false
+serverPort = 8501
