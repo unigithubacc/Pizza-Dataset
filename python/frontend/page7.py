@@ -89,21 +89,43 @@ def create_store_bar_chart2(data):
 
     return fig2
 
-def create_product_revenue_bar_chart(data, divide_by_size):
+def create_product_revenue_bar_chart(data, divide_by_size, size_color_map):
     product_names = [product['name'] for product in data]
     product_revenues = [product['product_revenue'] for product in data]
+
+    # Define the color mapping for each category
+    category_color_map = {
+        'Classic': '#66a61e',
+        'Vegetarian': '#e6ab02',
+        'Specialty': '#a6761d'
+    }
+    
+    # Map each pizza to its corresponding category color
+    product_color_map = {
+        'Margherita Pizza': category_color_map['Classic'],
+        'Pepperoni Pizza': category_color_map['Classic'],
+        'Hawaiian Pizza': category_color_map['Classic'],
+        'Meat Lover\'s Pizza': category_color_map['Classic'],
+        'Veggie Pizza': category_color_map['Vegetarian'],
+        'Sicilian Pizza': category_color_map['Vegetarian'],
+        'BBQ Chicken Pizza': category_color_map['Specialty'],
+        'Buffalo Chicken Pizza': category_color_map['Specialty'],
+        'Oxtail Pizza': category_color_map['Specialty']
+    }
 
     if divide_by_size:
         product_sizes = [product['size'] for product in data]
         labels = [f"{name} ({size})" for name, size in zip(product_names, product_sizes)]
+        colors = [size_color_map[size] for size in product_sizes]
     else:
         labels = product_names
+        colors = [product_color_map.get(name, 'lightskyblue') for name in product_names]
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=labels,
         x=product_revenues,
-        marker_color='lightskyblue',
+        marker_color=colors,
         hoverinfo='y+x',
         orientation='h',  # Set horizontal orientation
         name='Product Revenue'
@@ -119,11 +141,43 @@ def create_product_revenue_bar_chart(data, divide_by_size):
 
     return fig
 
+
+def create_product_size_pie_chart(data, size_color_map):
+    size_names = [size['size'] for size in data]
+    size_revenues = [size['product_revenue'] for size in data]
+    colors = [size_color_map[size] for size in size_names]
+
+    fig = go.Figure(data=[go.Pie(
+        labels=size_names, 
+        values=size_revenues, 
+        hole=0.3,
+        marker=dict(colors=colors)
+    )])
+
+    fig.update_layout(
+        title='Product Revenue by Size'
+    )
+
+    return fig
+
 def create_product_category_pie_chart(data):
     category_names = [category['category'] for category in data]
     category_revenues = [category['product_revenue'] for category in data]
 
-    fig = go.Figure(data=[go.Pie(labels=category_names, values=category_revenues, hole=0.3)])
+    category_color_map = {
+        'Classic': '#66a61e',
+        'Vegetarian': '#e6ab02',
+        'Specialty': '#a6761d'
+    }
+
+    colors = [category_color_map.get(category, 'lightskyblue') for category in category_names]
+
+    fig = go.Figure(data=[go.Pie(
+        labels=category_names, 
+        values=category_revenues, 
+        hole=0.3,
+        marker=dict(colors=colors)
+    )])
 
     fig.update_layout(
         title='Product Revenue by Category'
@@ -131,17 +185,7 @@ def create_product_category_pie_chart(data):
 
     return fig
 
-def create_product_size_pie_chart(data):
-    size_names = [size['size'] for size in data]
-    size_revenues = [size['product_revenue'] for size in data]
 
-    fig = go.Figure(data=[go.Pie(labels=size_names, values=size_revenues, hole=0.3)])
-
-    fig.update_layout(
-        title='Product Revenue by Size'
-    )
-
-    return fig
 
 def create_heatmap(data):
     product1_names = [item['product1'] for item in data]
@@ -184,7 +228,6 @@ def main():
     if 'selected_store_id' not in st.session_state:
         st.session_state.selected_store_id = store_id_from_url
 
-    # Überwache Änderungen an der storeid in der URL und aktualisiere session_state
     if store_id_from_url and store_id_from_url != st.session_state.selected_store_id:
         st.session_state.selected_store_id = store_id_from_url
 
@@ -194,6 +237,13 @@ def main():
     divide_by_size = st.sidebar.checkbox("Divide Pizzas by Size", value=False)
 
     col1, col2, col3 = st.columns([2, 2 ,1])
+
+    size_color_map = {
+        'Small': '#1b9e77',
+        'Medium': '#d95f02',
+        'Large': '#7570b3',
+        'Extra Large': '#e7298a'
+    }
 
     with col1:
         stores_data = fetch_top_selling_stores(start_date, end_date)
@@ -205,12 +255,13 @@ def main():
                 st.session_state.selected_store_id = selected_points[0]['x']
                 st.query_params.update(storeid=st.session_state.selected_store_id)
                 st.write(f"Selected Store ID: {st.session_state.selected_store_id}")
+
     with col2:
         if st.session_state.selected_store_id is not None:
             selected_store_id = st.session_state.selected_store_id
             store_product_data = fetch_store_product_revenue(selected_store_id, start_date, end_date, divide_by_size)
             if store_product_data:
-                fig = create_product_revenue_bar_chart(store_product_data, divide_by_size)
+                fig = create_product_revenue_bar_chart(store_product_data, divide_by_size, size_color_map)
                 st.plotly_chart(fig)
 
             product_frequency_data = fetch_product_frequency(selected_store_id, start_date, end_date)
@@ -227,9 +278,8 @@ def main():
             store_size_data = fetch_products_size(selected_store_id, start_date, end_date)
             
             if store_category_data and store_size_data:
-                pie_chart_size = create_product_size_pie_chart(store_size_data)
-                st.plotly_chart(pie_chart_size)
-
                 pie_chart_category = create_product_category_pie_chart(store_category_data)
-                st.plotly_chart(pie_chart_category)
-
+                st.plotly_chart(pie_chart_category)                
+                
+                pie_chart_size = create_product_size_pie_chart(store_size_data, size_color_map)
+                st.plotly_chart(pie_chart_size)
