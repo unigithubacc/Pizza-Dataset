@@ -707,6 +707,34 @@ async def get_products_frequency(
         for row in rows
     ]
 
+@router.get("/store-details/")
+async def get_store_details(
+    storeid: str,
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            storeid, latitude, longitude, city, state 
+        FROM 
+            stores 
+        WHERE 
+            storeid = :storeid
+    """)
+    
+    result = await session.execute(query, {'storeid': storeid})
+    store = result.fetchone()
+
+    if store:
+        return {
+            "storeid": store[0],
+            "latitude": store[1],
+            "longitude": store[2],
+            "city": store[3],
+            "state": store[4]
+        }
+    else:
+        raise HTTPException(status_code=404, detail="Store not found")
+
 @router.get('/stores')
 def read_root():
     return {"Hello": "World123"}
