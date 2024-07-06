@@ -255,7 +255,14 @@ def main():
             if selected_points:
                 st.session_state.selected_store_id = selected_points[0]['x']
                 st.query_params.update(storeid=st.session_state.selected_store_id)
-                st.write(f"Selected Store ID: {st.session_state.selected_store_id}")
+      
+        st.divider()
+        
+        col4, col5 = st.columns([1, 5])
+        with col5:        
+            st.subheader(f"Selected Store ID: {st.session_state.selected_store_id}")
+            if st.session_state.selected_store_id is None:
+                st.warning("Select a bar to see more information for this Store.") 
 
     with col2:
         if st.session_state.selected_store_id is not None:
@@ -270,8 +277,6 @@ def main():
                 fig_heatmap = create_heatmap(product_frequency_data)
                 st.plotly_chart(fig_heatmap)
                 
-        else:
-            st.sidebar.warning("Select store IDs to see the number of sales for those stores")
             
     with col3:
         if st.session_state.selected_store_id is not None:
