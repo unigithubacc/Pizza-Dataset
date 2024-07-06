@@ -288,7 +288,7 @@ def main():
                         st.text(f"State: {store['state']}")
                         st.text(f"Zipcode: {store['zipcode']}")
                         st.text(f"Average Revenue per Order: ${store['average_revenue']}")
-                        st.text(f"Average Number of Pizzas Sold: {store['average_number_of_pizzas_sold']}")
+                        st.text(f"Average Number of Pizzas Sold per Order: {store['average_number_of_pizzas_sold']}")
                         st.text(f"Average Pizza Price: ${store['average_price']}")
                 
 
