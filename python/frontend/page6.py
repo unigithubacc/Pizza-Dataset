@@ -325,17 +325,15 @@ def main():
                 revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(revenue_fig, use_container_width=False)
                 
-                store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
-                folium_static(store_map, width=700, height=350)
-                
             elif chart_type == "Total Sales":
                 sales_data = fetch_sales_data(period, end_date)
                 prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
                 sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
                 st.plotly_chart(sales_fig, use_container_width=False)
                 
-                store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
-                folium_static(store_map, width=700, height=350)
+                
+            store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
+            folium_static(store_map, width=700, height=350)
 
         else:
             empty_fig = create_empty_line_chart()
