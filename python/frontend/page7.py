@@ -5,6 +5,20 @@ from streamlit_plotly_events import plotly_events
 from datetime import date
 
 @st.cache_data
+def fetch_store_informartion(store_id, start_date, end_date):
+    response = requests.get(f'http://localhost:8000/stores/generell-information', params={
+        'storeid': store_id,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        st.error("Fehler beim Abrufen der Daten.")
+        return []
+
+@st.cache_data
 def fetch_product_frequency(store_id, start_date, end_date):
     response = requests.get(f'http://localhost:8000/products/frequency', params={
         'storeid': store_id,
@@ -256,13 +270,27 @@ def main():
                 st.session_state.selected_store_id = selected_points[0]['x']
                 st.query_params.update(storeid=st.session_state.selected_store_id)
       
-        st.divider()
+        #st.divider()
+        placeholder = st.empty()
+        placeholder.subheader(" ")
+
         
         col4, col5 = st.columns([1, 5])
         with col5:        
             st.subheader(f"Selected Store ID: {st.session_state.selected_store_id}")
             if st.session_state.selected_store_id is None:
                 st.warning("Select a bar to see more information for this Store.") 
+            else:
+                store_revenue_data = fetch_store_informartion(st.session_state.selected_store_id, start_date, end_date)
+                if store_revenue_data:
+                    for store in store_revenue_data:
+                        st.text(f"City: {store['city']}")
+                        st.text(f"State: {store['state']}")
+                        st.text(f"Zipcode: {store['zipcode']}")
+                        st.text(f"Average Revenue per Order: ${store['average_revenue']}")
+                        st.text(f"Average Number of Pizzas Sold: {store['average_number_of_pizzas_sold']}")
+                        st.text(f"Average Pizza Price: ${store['average_price']}")
+                
 
     with col2:
         if st.session_state.selected_store_id is not None:

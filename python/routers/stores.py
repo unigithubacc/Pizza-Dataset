@@ -98,6 +98,13 @@ class ProductCount(BaseModel):
     product1: str
     product2: str
     avgfrequencyperorder: float
+class StoreRevenue(BaseModel):
+    zipcode: int
+    city: str
+    state: str
+    average_revenue: float
+    average_price: float
+    average_number_of_pizzas_sold: float
 
 router = APIRouter()
 
@@ -705,6 +712,61 @@ async def get_products_frequency(
             "avgfrequencyperorder": row[4]
         }
         for row in rows
+    ]
+
+@router.get("/stores/generell-information", response_model=List[StoreRevenue])
+async def get_store_revenue(
+    storeid: str,
+    start_date: date = date(2020, 1, 1),
+    end_date: date = date(2023, 1, 1),
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT 
+            s.zipcode,
+            s.city,
+            s.state,
+            Round(avg_revenue.average_revenue, 2) AS average_revenue,
+            Round(avg_price.average_price, 2) AS average_price,
+            Round(avg_pizzas.average_number_of_pizzas_sold, 2) AS average_number_of_pizzas_sold
+        FROM 
+            stores s
+        JOIN 
+            (SELECT storeid, AVG(total) AS average_revenue
+             FROM orders
+             WHERE storeid = :storeid
+             AND orderdate BETWEEN :start_date AND :end_date
+             GROUP BY storeid) avg_revenue ON s.storeid = avg_revenue.storeid
+        JOIN 
+            (SELECT storeid, AVG(nitems) AS average_number_of_pizzas_sold
+             FROM orders
+             WHERE storeid = :storeid
+             AND orderdate BETWEEN :start_date AND :end_date
+             GROUP BY storeid) avg_pizzas ON s.storeid = avg_pizzas.storeid
+        LEFT JOIN 
+            (SELECT o.storeid, AVG(p.price) AS average_price
+             FROM orders o
+             JOIN order_items oi ON o.orderid = oi.orderid
+             JOIN products p ON oi.sku = p.sku
+             WHERE o.storeid = :storeid
+             AND o.orderdate BETWEEN :start_date AND :end_date
+             GROUP BY o.storeid) avg_price ON s.storeid = avg_price.storeid
+        WHERE 
+            s.storeid = :storeid
+    """)
+    
+    result = await session.execute(query, {"storeid": storeid, "start_date": start_date, "end_date": end_date})
+    stores = result.fetchall()
+    
+    return [
+        {
+            "zipcode": store.zipcode,
+            "city": store.city,
+            "state": store.state,
+            "average_revenue": store.average_revenue,
+            "average_price": store.average_price,
+            "average_number_of_pizzas_sold": store.average_number_of_pizzas_sold,
+        } for store in stores
     ]
 
 @router.get('/stores')
