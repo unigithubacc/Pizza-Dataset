@@ -204,8 +204,8 @@ def create_heatmap(data):
         'showscale': True,
     }
 
-    layout = {
-        'title': 'Combination Frequency of Product2 in Orders Following Purchase of Product1',
+    layout = {  
+        'title': 'Analysis of Product Pairings: Product1 Frequency vs. Combined Purchases',
         'xaxis': {
             'tickvals': list(product_index.values()),
             'ticktext': list(product_index.keys()),
