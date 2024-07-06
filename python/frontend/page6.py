@@ -329,11 +329,7 @@ def main():
                 sales_data = fetch_sales_data(period, end_date)
                 prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
                 sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-                st.plotly_chart(sales_fig, use_container_width=False)
-                
-                
-            store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
-            folium_static(store_map, width=700, height=350)
+                st.plotly_chart(sales_fig, use_container_width=False)         
 
         else:
             empty_fig = create_empty_line_chart()
@@ -343,3 +339,5 @@ def main():
         if not top_selling_stores:
             st.error("No top selling stores data available.")
 
+        store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
+        folium_static(store_map, width=700, height=350)
