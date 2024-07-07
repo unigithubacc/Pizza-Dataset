@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from sqlalchemy import select
 from pydantic import BaseModel
+from datetime import date
 
 
 
@@ -49,6 +50,14 @@ async def get_dashboard_overview(session: AsyncSession = Depends(get_session)):
         results[key] = result.scalar()
     
     return results
+
+@router.get("/product-launch-dates")
+async def get_product_launch_dates(session: AsyncSession = Depends(get_session)):
+    query = "SELECT Name, Launch FROM products WHERE Launch IS NOT NULL;"
+    result = await session.execute(text(query))
+    rows = result.fetchall()
+    launch_dates = [{"Name": row[0], "Launch": row[1].isoformat()} for row in rows]
+    return launch_dates
 
 @router.get('/dashboard')
 def read_root():
