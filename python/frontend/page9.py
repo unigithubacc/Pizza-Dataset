@@ -4,7 +4,7 @@ import requests
 # Fetch dashboard overview data
 def fetch_dashboard_overview():
     try:
-        url = 'http://localhost:8501/dashboard-overview'  # Adjust the URL to match your actual endpoint
+        url = 'http://localhost:8000/dashboard-overview'  # Adjust the URL to match your actual endpoint
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
@@ -30,7 +30,8 @@ def create_card(title, value, icon):
 
 # Main application logic
 def main():
-    st.title("Data analysis dashboard")
+    st.title("Welcome to the Data Analysis Dashboard")
+    st.header("General Overview")
 
     # Fetch the data
     data = fetch_dashboard_overview()
