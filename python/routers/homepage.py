@@ -16,8 +16,6 @@ from sqlalchemy import select
 from pydantic import BaseModel
 from datetime import date
 
-
-
 DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -33,31 +31,33 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
-
 @router.get("/dashboard-overview")
 async def get_dashboard_overview(session: AsyncSession = Depends(get_session)):
     queries = {
         "TotalRevenue": "SELECT SUM(total) AS TotalRevenue FROM public.orders;",
         "TotalOrders": "SELECT COUNT(orderID) AS TotalOrders FROM public.orders;",
         "TotalCustomers": "SELECT COUNT(DISTINCT customerID) AS TotalCustomers FROM public.customers;",
-        "TotalStores": "SELECT COUNT(storeID) AS TotalStores FROM public.stores;"
+        "TotalStores": "SELECT COUNT(storeID) AS TotalStores FROM public.stores;",
+        "PizzasSold": "SELECT SUM(nItems) AS PizzasSold FROM public.orders;",
+        "NumberOfProducts": "SELECT COUNT(DISTINCT Name) AS NumberOfProducts FROM public.products;",
+        "MostPopularProduct": """
+            SELECT products.Name 
+            FROM public.order_items 
+            JOIN public.products ON order_items.SKU = products.SKU 
+            GROUP BY products.Name 
+            ORDER BY COUNT(order_items.SKU) DESC 
+            LIMIT 1;
+        """,
+        "AverageOrderValue": "SELECT AVG(total) AS AverageOrderValue FROM public.orders;",
     }
-    
+
     results = {}
-    
+
     for key, query in queries.items():
         result = await session.execute(text(query))
         results[key] = result.scalar()
-    
-    return results
 
-@router.get("/product-launch-dates")
-async def get_product_launch_dates(session: AsyncSession = Depends(get_session)):
-    query = "SELECT Name, Launch FROM products WHERE Launch IS NOT NULL;"
-    result = await session.execute(text(query))
-    rows = result.fetchall()
-    launch_dates = [{"Name": row[0], "Launch": row[1].isoformat()} for row in rows]
-    return launch_dates
+    return results
 
 @router.get('/dashboard')
 def read_root():
