@@ -2,7 +2,6 @@ import streamlit as st
 from frontend.page1 import main as page1_main
 from frontend.page2 import main as page2_main
 from frontend.page3 import main as page3_main
-from frontend.page4 import main as page4_main
 from frontend.page5 import main as page5_main
 from frontend.page6 import main as page6_main
 from frontend.page7 import main as page7_main
@@ -74,7 +73,6 @@ PAGES = {
     "Store/Single": page7_main,
     "Store/Repeat Customer": page8_main,
     "Customers": page3_main,
-    "Dynamische Datenfilterung": page4_main,
     "Seite 5": page5_main,
 }
 
@@ -87,7 +85,6 @@ ICONS = {
     "Store/Single": "",
     "Store/Repeat Customer": "",
     "Customers": "👥",
-    "Dynamische Datenfilterung": "📊",
     "Seite 5": "📄"
 }
 
@@ -109,7 +106,7 @@ if 'storeid' not in st.session_state:
 selection = None
 
 # Hauptseiten
-main_pages = ["Homepage", "Store Overview", "Products", "Customers", "Dynamische Datenfilterung", "Seite 5"]
+main_pages = ["Homepage", "Store Overview", "Products", "Customers", "Seite 5"]
 for page in main_pages:
     if page == "Store Overview":
         store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=st.session_state.page.startswith("Store Overview"))

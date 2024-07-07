@@ -4,6 +4,7 @@ import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 import folium
+from folium.plugins import MarkerCluster
 from streamlit_folium import folium_static
 from datetime import date
 import webbrowser
@@ -224,9 +225,13 @@ color_legend = {
 
 # Funktion zum Erstellen einer Karte mit Store-Standorten
 @st.experimental_fragment
-def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500):
+def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500, max_cluster_radius=50, min_cluster_size=2):
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
+
+    # Sortieren der selected_stores basierend auf den umgekehrten Indizes in selected_store_ids
+    selected_store_ids_reversed = list(reversed(selected_store_ids))
+    selected_stores.sort(key=lambda store: selected_store_ids_reversed.index(store['storeID']))
 
     # Geografische Zentren von Kalifornien, Nevada und Arizona
     center_coords = [(37.7749, -122.4194), (39.8283, -119.8173), (36.1699, -111.8901)]  # Kalifornien, Nevada, Arizona
@@ -240,6 +245,9 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
 
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
 
+    # Cluster für die Marker erstellen mit angepasstem Radius und Mindestclustergröße
+    marker_cluster = MarkerCluster(max_cluster_radius=0.00001, min_cluster_size=min_cluster_size).add_to(m)
+
     for store in selected_stores:
         store_index = selected_store_ids.index(store['storeID'])
         marker_color = color_legend[selected_store_colors[store_index]]
@@ -248,7 +256,7 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
             location=[store['latitude'], store['longitude']],
             popup=store_popup,
             icon=folium.Icon(color=marker_color, icon='store', prefix='fa')
-        ).add_to(m)
+        ).add_to(marker_cluster)
 
     return m
 
@@ -329,11 +337,7 @@ def main():
                 sales_data = fetch_sales_data(period, end_date)
                 prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
                 sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-                st.plotly_chart(sales_fig, use_container_width=False)
-                
-                
-            store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
-            folium_static(store_map, width=700, height=350)
+                st.plotly_chart(sales_fig, use_container_width=False)         
 
         else:
             empty_fig = create_empty_line_chart()
@@ -343,3 +347,5 @@ def main():
         if not top_selling_stores:
             st.error("No top selling stores data available.")
 
+        store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
+        folium_static(store_map, width=700, height=350)
