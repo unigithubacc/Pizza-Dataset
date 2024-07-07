@@ -54,6 +54,27 @@ async def get_customer_locations(min_orders: int = Query(1, description="Minimum
     customer_locations = result.fetchall()
     return [{"latitude": loc[0], "longitude": loc[1]} for loc in customer_locations]
 
+@router.get("/customer_locations/{storeid}")
+async def get_customer_locations(storeid: str, min_orders: int = Query(1, description="Minimum number of orders"), session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            c.latitude, 
+            c.longitude
+        FROM 
+            customers c
+        JOIN (
+            SELECT customerID
+            FROM orders
+            WHERE storeID = :storeid
+            GROUP BY customerID
+            HAVING COUNT(*) >= :min_orders
+        ) o ON c.customerID = o.customerID;
+    """)
+    result = await session.execute(query, {"storeid": storeid, "min_orders": min_orders})
+    customer_locations = result.fetchall()
+    return [{"latitude": loc[0], "longitude": loc[1]} for loc in customer_locations]
+
+
     # Store Locations
 @router.get("/store-locations")
 async def get_store_locations(session: AsyncSession = Depends(get_session)):

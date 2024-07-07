@@ -5,6 +5,9 @@ import numpy as np
 import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
+import folium
+from folium.plugins import HeatMap, MarkerCluster
+from streamlit_folium import st_folium
 
 @st.cache_data
 def fetch_data(min_order_count):
@@ -25,6 +28,16 @@ def fetch_store_details(storeid):
     else:
         st.error("Error fetching store details")
         return None
+
+@st.cache_data
+def fetch_customer_locations(storeid, min_orders):
+    url = f"http://localhost:8000/customer_locations/{storeid}?min_orders={min_orders}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Error fetching customer locations")
+        return []
 
 def generate_heatmap(data):
     if data:
@@ -68,37 +81,53 @@ def generate_heatmap(data):
     else:
         return None
 
-def display_store_location(storeid):
-    store_details = fetch_store_details(storeid)
+def create_geo_chart(customer_data, store_data):
+    if customer_data:
+        avg_lat = sum([item['latitude'] for item in customer_data]) / len(customer_data)
+        avg_lon = sum([item['longitude'] for item in customer_data]) / len(customer_data)
+    else:
+        avg_lat, avg_lon = 0, 0
+
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=10)
+
+    # Add marker cluster for customers
+    customer_cluster = MarkerCluster(name="Customers").add_to(m)
+
+    # Add heatmap for customers
+    heat_data = [[item['latitude'], item['longitude']] for item in customer_data]
+    HeatMap(heat_data).add_to(m)
+
+    # Add customer markers
+    for item in customer_data:
+        folium.Marker(
+            location=[item['latitude'], item['longitude']],
+            popup=f"Lat: {item['latitude']}, Long: {item['longitude']}",
+        ).add_to(customer_cluster)
+
+    # Add store markers
+    for store in store_data:
+        store_popup = f"Store ID: {store.get('storeid', 'N/A')}<br>City: {store.get('city', 'N/A')}<br>State: {store.get('state', 'N/A')}"
+        folium.Marker(
+            location=[store['latitude'], store['longitude']],
+            popup=store_popup,
+            icon=folium.Icon(color='red', icon='home', prefix='fa')
+        ).add_to(m)
+
+    return m
+
+def display_store_location_and_customers(selected_storeid, min_orders):
+    store_details = fetch_store_details(selected_storeid)
+    customer_data = fetch_customer_locations(selected_storeid, min_orders)
+  
     if store_details:
-        fig = go.Figure(go.Scattermapbox(
-            lat=[store_details['latitude']],
-            lon=[store_details['longitude']],
-            mode='markers',
-            marker=go.scattermapbox.Marker(
-                size=14
-            ),
-            text=f"{store_details['city']}, {store_details['state']}"
-        ))
-
-        fig.update_layout(
-            mapbox_style="open-street-map",
-            mapbox=dict(
-                center=go.layout.mapbox.Center(
-                    lat=store_details['latitude'],
-                    lon=store_details['longitude']
-                ),
-                zoom=10
-            ),
-            margin={"r":0,"t":0,"l":0,"b":0}
-        )
-
-        st.plotly_chart(fig)
+        store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
+        geo_map = create_geo_chart(customer_data, store_data)
+        st_folium(geo_map, width=1050, height=500)
     else:
         st.error("Unable to fetch store details")
 
 def main():
-    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=0, value=1)
+    min_order_count = st.sidebar.number_input("Minimum number of repeat orders for the heatmap:", min_value=0, value=1)
     data = fetch_data(min_order_count)
 
     if data:
@@ -107,7 +136,8 @@ def main():
             selected_points = plotly_events(fig, click_event=True)
             if selected_points:
                 selected_storeid = selected_points[0]['x']
-                display_store_location(selected_storeid)
+                min_orders = st.sidebar.number_input("Minimum number of orders for customer locations:", min_value=1, value=1)
+                display_store_location_and_customers(selected_storeid, min_orders)
         else:
             st.warning("No data to display for the selected criteria.")
 
