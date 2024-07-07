@@ -122,24 +122,25 @@ def display_store_location_and_customers(selected_storeid, min_orders):
     if store_details:
         store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
         geo_map = create_geo_chart(customer_data, store_data)
-        st_folium(geo_map, width=1050, height=500)
+        st_folium(geo_map, width=1400, height=500)
     else:
         st.error("Unable to fetch store details")
 
 def main():
-    min_order_count = st.sidebar.number_input("Minimum number of repeat orders for the heatmap:", min_value=0, value=1)
+    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=1, value=1)
     data = fetch_data(min_order_count)
 
     if data:
-        fig = generate_heatmap(data)
-        if fig:
-            selected_points = plotly_events(fig, click_event=True)
-            if selected_points:
-                selected_storeid = selected_points[0]['x']
-                min_orders = st.sidebar.number_input("Minimum number of orders for customer locations:", min_value=1, value=1)
-                display_store_location_and_customers(selected_storeid, min_orders)
-        else:
-            st.warning("No data to display for the selected criteria.")
+        with st.container():
+            fig = generate_heatmap(data)
+            st.info("Select a store from the heatmap to see store and customer locations.")
+            if fig:
+                selected_points = plotly_events(fig, click_event=True)
+                if selected_points:
+                    selected_storeid = selected_points[0]['x']
+                    display_store_location_and_customers(selected_storeid, min_order_count)
+            else:
+                st.warning("No data to display for the selected criteria.")
 
 if __name__ == "__main__":
     main()
