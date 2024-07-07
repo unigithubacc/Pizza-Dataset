@@ -228,6 +228,10 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
 
+    # Sortieren der selected_stores basierend auf den umgekehrten Indizes in selected_store_ids
+    selected_store_ids_reversed = list(reversed(selected_store_ids))
+    selected_stores.sort(key=lambda store: selected_store_ids_reversed.index(store['storeID']))
+
     # Geografische Zentren von Kalifornien, Nevada und Arizona
     center_coords = [(37.7749, -122.4194), (39.8283, -119.8173), (36.1699, -111.8901)]  # Kalifornien, Nevada, Arizona
     # Wählen Sie das erste Koordinatensystem aus, wenn keine ausgewählten Stores vorhanden sind
@@ -240,6 +244,18 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
 
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
 
+    # Überprüfen auf doppelte Koordinaten und leichtes Versetzen
+    coords_count = {}
+    for store in selected_stores:
+        coords = (store['latitude'], store['longitude'])
+        if coords in coords_count:
+            coords_count[coords] += 10
+            offset = (coords_count[coords] - 1) * 0.0001
+            store['latitude'] += offset
+            store['longitude'] += offset
+        else:
+            coords_count[coords] = 1
+
     for store in selected_stores:
         store_index = selected_store_ids.index(store['storeID'])
         marker_color = color_legend[selected_store_colors[store_index]]
@@ -251,6 +267,8 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
         ).add_to(m)
 
     return m
+
+
 
 # Hauptfunktion
 def main():
