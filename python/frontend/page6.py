@@ -4,6 +4,7 @@ import requests
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 import folium
+from folium.plugins import MarkerCluster
 from streamlit_folium import folium_static
 from datetime import date
 import webbrowser
@@ -224,7 +225,7 @@ color_legend = {
 
 # Funktion zum Erstellen einer Karte mit Store-Standorten
 @st.experimental_fragment
-def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500):
+def create_store_map(selected_store_ids, selected_store_colors, width='100%', height=500, max_cluster_radius=50, min_cluster_size=2):
     stores = fetch_store_locations()
     selected_stores = [store for store in stores if store['storeID'] in selected_store_ids]
 
@@ -244,17 +245,8 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
 
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5)
 
-    # Überprüfen auf doppelte Koordinaten und leichtes Versetzen
-    coords_count = {}
-    for store in selected_stores:
-        coords = (store['latitude'], store['longitude'])
-        if coords in coords_count:
-            coords_count[coords] += 10
-            offset = (coords_count[coords] - 1) * 0.0001
-            store['latitude'] += offset
-            store['longitude'] += offset
-        else:
-            coords_count[coords] = 1
+    # Cluster für die Marker erstellen mit angepasstem Radius und Mindestclustergröße
+    marker_cluster = MarkerCluster(max_cluster_radius=0.00001, min_cluster_size=min_cluster_size).add_to(m)
 
     for store in selected_stores:
         store_index = selected_store_ids.index(store['storeID'])
@@ -264,11 +256,9 @@ def create_store_map(selected_store_ids, selected_store_colors, width='100%', he
             location=[store['latitude'], store['longitude']],
             popup=store_popup,
             icon=folium.Icon(color=marker_color, icon='store', prefix='fa')
-        ).add_to(m)
+        ).add_to(marker_cluster)
 
     return m
-
-
 
 # Hauptfunktion
 def main():
