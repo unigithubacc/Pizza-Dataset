@@ -4,6 +4,7 @@ import plotly.express as px
 import numpy as np
 import requests
 import plotly.graph_objects as go
+from streamlit_plotly_events import plotly_events
 
 @st.cache_data
 def fetch_data(min_order_count):
@@ -63,9 +64,9 @@ def generate_heatmap(data):
                         title='Returning Customer Heatmap',
                         color_continuous_scale="Viridis")
 
-        return fig, df['storeid'].unique()
+        return fig
     else:
-        return None, []
+        return None
 
 def display_store_location(storeid):
     store_details = fetch_store_details(storeid)
@@ -101,12 +102,12 @@ def main():
     data = fetch_data(min_order_count)
 
     if data:
-        fig, store_ids = generate_heatmap(data)
+        fig = generate_heatmap(data)
         if fig:
-            store_id = st.selectbox("Select Store ID to view location:", store_ids)
-            st.plotly_chart(fig)
-            if store_id:
-                display_store_location(store_id)
+            selected_points = plotly_events(fig, click_event=True)
+            if selected_points:
+                selected_storeid = selected_points[0]['x']
+                display_store_location(selected_storeid)
         else:
             st.warning("No data to display for the selected criteria.")
 
