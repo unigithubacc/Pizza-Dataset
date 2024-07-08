@@ -129,8 +129,8 @@ for page in main_pages:
 if not selection:
     selection = st.session_state.page if st.session_state.page in PAGES else 'Homepage'
 
-# Store ID eingeben (falls auf "Store/Single" Seite)
-if selection == "Store/Single":
+# Store ID eingeben (falls auf "Store/Single", "Store/Repeat Customer" oder "Store/Multiple" Seite)
+if selection in ["Store/Single", "Store/Repeat Customer", "Store/Multiple"]:
     st.session_state.storeid = st.sidebar.text_input("Enter Store ID", st.session_state.storeid)
     if st.session_state.storeid:
         st.query_params.update({'page': selection, 'storeid': st.session_state.storeid})
