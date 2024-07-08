@@ -71,7 +71,6 @@ PAGES = {
     "Store Overview": page2_main,
     "Store/Multiple": page6_main,
     "Store/Single": page7_main,
-    "Store/Repeat Customer": page8_main,
     "Customers": page3_main,
     "Seite 5": page5_main,
 }
@@ -83,7 +82,6 @@ ICONS = {
     "Store Overview": "🏪",
     "Store/Multiple": "",
     "Store/Single": "",
-    "Store/Repeat Customer": "",
     "Customers": "👥",
     "Seite 5": "📄"
 }
@@ -106,7 +104,7 @@ if 'storeid' not in st.session_state:
 selection = None
 
 # Hauptseiten
-main_pages = ["Homepage", "Store Overview", "Products", "Customers", "Seite 5"]
+main_pages = ["Homepage", "Store Overview", "Customers", "Products", "Seite 5"]
 for page in main_pages:
     if page == "Store Overview":
         store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=st.session_state.page.startswith("Store Overview"))
@@ -117,9 +115,6 @@ for page in main_pages:
             if st.button("Single", key="Store/Single", help="Store/Single", use_container_width=True):
                 st.session_state.page = "Store/Single"
                 selection = "Store/Single"
-            if st.button("Repeat Customer", key="Store/Repeat Customer", help="Store/Repeat Customer", use_container_width=True):
-                st.session_state.page = "Store/Repeat Customer"
-                selection = "Store/Repeat Customer"
     else:
         if st.sidebar.button(f"{ICONS[page]} {page}", key=page, help=page, use_container_width=True):
             st.session_state.page = page
@@ -130,8 +125,8 @@ if not selection:
     selection = st.session_state.page if st.session_state.page in PAGES else 'Homepage'
 
 # Store ID eingeben (falls auf "Store/Single", "Store/Repeat Customer" oder "Store/Multiple" Seite)
-if selection in ["Store/Single", "Store/Repeat Customer", "Store/Multiple"]:
-    st.session_state.storeid = st.sidebar.text_input("Enter Store ID", st.session_state.storeid)
+if selection in ["Store/Single","Customers"]:
+    #st.session_state.storeid = st.sidebar.text_input("Enter Store ID", st.session_state.storeid)
     if st.session_state.storeid:
         st.query_params.update({'page': selection, 'storeid': st.session_state.storeid})
     else:
