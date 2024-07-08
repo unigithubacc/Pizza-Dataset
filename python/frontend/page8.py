@@ -127,20 +127,31 @@ def display_store_location_and_customers(selected_storeid, min_orders):
         st.error("Unable to fetch store details")
 
 def main():
+    # Extract query parameters from the URL
+    query_params = st.query_params
+    store_id_from_url = query_params.get("storeid", None)
+
     min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=1, value=1)
     data = fetch_data(min_order_count)
 
     if data:
         with st.container():
             fig = generate_heatmap(data)
-            st.info("Select a store from the heatmap to see store and customer locations.")
+            st.sidebar.info("Select a store from the heatmap to see store and customer locations.")
             if fig:
                 selected_points = plotly_events(fig, click_event=True)
-                if selected_points:
+                if selected_points and len(selected_points) > 0:
                     selected_storeid = selected_points[0]['x']
-                    display_store_location_and_customers(selected_storeid, min_order_count)
+                    st.query_params.update(storeid=selected_storeid)
+                    if selected_points or store_id_from_url:
+                        # Update the URL with the selected store ID
+                        st.query_params.update(storeid=selected_storeid)
+                        display_store_location_and_customers(selected_storeid, min_order_count)
+                else:
+                    # Handle the case where no points were selected or the list is empty
+                    pass  # You can add logic here to handle this case, e.g., show a message to the user
+
+
             else:
                 st.warning("No data to display for the selected criteria.")
-
-if __name__ == "__main__":
-    main()
+                
