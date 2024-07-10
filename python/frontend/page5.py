@@ -85,6 +85,3 @@ def main():
         # Display the list of categories and their sales figures
         st.subheader("List of categories and their sales figures:")
         st.table(sales_data)
-
-if __name__ == "__main__":
-    main()

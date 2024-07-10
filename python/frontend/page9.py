@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 
 # Fetch dashboard overview data
+@st.cache_data
 def fetch_dashboard_overview():
     try:
         url = 'http://localhost:8000/dashboard-overview'  # Adjust the URL to match your actual endpoint
@@ -89,5 +90,3 @@ def main():
         st.markdown(create_card("Most Popular Product", most_popular_product, popular_icon), unsafe_allow_html=True)
         st.markdown(create_card("Average Order Value", f"${average_order_value:,.2f}", avg_order_icon), unsafe_allow_html=True)
 
-if __name__ == "__main__":
-    main()

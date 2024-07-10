@@ -72,7 +72,6 @@ PAGES = {
     "Store/Multiple": page6_main,
     "Store/Single": page7_main,
     "Customers": page3_main,
-    "Seite 5": page5_main,
 }
 
 # Icons für die Seiten
@@ -83,7 +82,6 @@ ICONS = {
     "Store/Multiple": "",
     "Store/Single": "",
     "Customers": "👥",
-    "Seite 5": "📄"
 }
 
 # CSS laden
@@ -104,7 +102,7 @@ if 'storeid' not in st.session_state:
 selection = None
 
 # Hauptseiten
-main_pages = ["Homepage", "Store Overview", "Customers", "Products", "Seite 5"]
+main_pages = ["Homepage", "Store Overview", "Customers", "Products"]
 for page in main_pages:
     if page == "Store Overview":
         store_expanded = st.sidebar.expander("🏪 Store Overview", expanded=st.session_state.page.startswith("Store Overview"))
