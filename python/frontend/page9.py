@@ -44,16 +44,17 @@ def main():
     st.markdown(background_image, unsafe_allow_html=True)
 
     # Define columns for layout
-    col1, col2 = st.columns([10, 1])  # Adjust column ratios as needed
+    col1, col2 = st.columns([8, 1])  # Adjust column ratios as needed
 
     # Column 1: Logo
     with col2:
+        st.header(" ")
         st.image("DallEPizzaLogo.png", width=200)  # Adjust width as needed
 
     # Column 2: Title and dashboard overview
     with col1:
-        st.title("Welcome to the Data Analysis Dashboard")
-        st.header("General Overview")
+        #st.title("Welcome to the Data Analysis Dashboard")
+        st.header("Welcome to WESTERN PIZZA's Shop Analytics ")
 
         # Fetch the data
         data = fetch_dashboard_overview()
