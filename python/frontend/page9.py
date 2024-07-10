@@ -50,7 +50,7 @@ def main():
     # Column 1: Logo
     with col2:
         st.header(" ")
-        st.image("DallEPizzaLogo.png", width=200)  # Adjust width as needed
+        st.image("static/DallEPizzaLogo.png", width=200)  # Adjust width as needed
 
     # Column 2: Title and dashboard overview
     with col1:
