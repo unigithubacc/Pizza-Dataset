@@ -19,12 +19,12 @@ def fetch_dashboard_overview():
 def create_card(title, value, icon):
     card_html = f"""
     <div style="display: flex; align-items: center; justify-content: space-between; 
-                background-color: #f9f9f9; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                background-color: #f9f9f9; padding: 5px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="flex-grow: 1;">
-            <h4 style="margin: 0;">{title}</h4>
-            <p style="font-size: 1.5em; font-weight: bold; margin: 0;">{value}</p>
+            <h5 style="margin: 0; font-size: 1,0em;">{title}</h5>
+            <p style="font-size: 1.2em; font-weight: bold; margin: 0;">{value}</p>
         </div>
-        <div style="font-size: 2em; color: #007BFF;">
+        <div style="font-size: 1.5em; color: #007BFF;">
             {icon}
         </div>
     </div>
@@ -32,6 +32,17 @@ def create_card(title, value, icon):
     return card_html
 
 def main():
+    # Set background image (optional)
+    background_image = """
+    <style>
+    .stApp {
+        background: url('DallEPizzaLogo.png');
+        background-size: cover;
+    }
+    </style>
+    """
+    st.markdown(background_image, unsafe_allow_html=True)
+
     # Define columns for layout
     col1, col2 = st.columns([10, 1])  # Adjust column ratios as needed
 
