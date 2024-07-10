@@ -2,9 +2,10 @@ import streamlit as st
 import plotly.graph_objects as go
 import requests
 from datetime import datetime
+from streamlit_plotly_events import plotly_events  # You need to install streamlit-plotly-events
 
 # Fetch sales distribution
-def fetch_sales_distribution(year=None, quarter=None, month=None):
+def fetch_sales_distribution(year=None, quarter=None, month=None, category=None):
     try:
         url = 'http://localhost:8000/sales-distribution'
         params = {}
@@ -14,6 +15,8 @@ def fetch_sales_distribution(year=None, quarter=None, month=None):
             params['quarter'] = quarter
         if month:
             params['month'] = month
+        if category:
+            params['category'] = category
         
         response = requests.get(url, params=params)  
         response.raise_for_status()  
@@ -23,7 +26,7 @@ def fetch_sales_distribution(year=None, quarter=None, month=None):
         return []
 
 # Create pie chart
-def create_pie_chart(data):
+def create_pie_chart(data, title):
     categories = [item['category'] for item in data]
     total_sales = [item['total_sold'] for item in data]
 
@@ -39,8 +42,8 @@ def create_pie_chart(data):
     colors = [color_map.get(category, "#FFFFFF") for category in categories]  # Default to white if category not in map
 
     fig = go.Figure(data=[go.Pie(labels=categories, values=total_sales, hole=.3, marker=dict(colors=colors))])
-    fig.update_layout(title_text='Sales Distribution by Product Category')
-    
+    fig.update_layout(title_text=title)
+
     return fig
 
 def convert_month_slider_value(month_slider_value):
@@ -79,12 +82,24 @@ def main():
         sales_data = fetch_sales_distribution(month=selected_month)
     
     if sales_data:
-        fig = create_pie_chart(sales_data)
+        fig = create_pie_chart(sales_data, 'Sales Distribution by Product Category')
+        selected_points = plotly_events(fig, click_event=True)
         st.plotly_chart(fig)
         
         # Display the list of categories and their sales figures
         st.subheader("List of categories and their sales figures:")
         st.table(sales_data)
+        
+        if selected_points:
+            selected_category = selected_points[0]['p.Category']
+            st.write(f"Fetching data for category: {selected_category}")
+            category_data = fetch_sales_distribution(category=selected_category)
+            
+            if category_data:
+                fig_category = create_pie_chart(category_data, f'Sales Distribution within {selected_category}')
+                st.plotly_chart(fig_category)
+                st.subheader(f"List of items in category {selected_category} and their sales figures:")
+                st.table(category_data)
 
 if __name__ == "__main__":
     main()

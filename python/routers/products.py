@@ -50,7 +50,8 @@ async def get_top_selling_products(session: AsyncSession = Depends(get_session))
 async def get_sales_distribution(
     year: Optional[int] = None, 
     quarter: Optional[str] = None, 
-    month: Optional[int] = None, 
+    month: Optional[int] = None,
+    category: Optional[str] = None,
     session: AsyncSession = Depends(get_session)
 ):
     base_query = """
@@ -69,26 +70,30 @@ async def get_sales_distribution(
     params = {}
 
     if year is not None:
-        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year")
+        filters.append("EXTRACT(YEAR FROM o.orderDate) = :year")
         params["year"] = year
 
     if quarter and quarter != "All":
         if quarter == "Q1":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (1, 2, 3)")
+            filters.append("EXTRACT(MONTH FROM o.orderDate) IN (1, 2, 3)")
         elif quarter == "Q2":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (4, 5, 6)")
+            filters.append("EXTRACT(MONTH FROM o.orderDate) IN (4, 5, 6)")
         elif quarter == "Q3":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (7, 8, 9)")
+            filters.append("EXTRACT(MONTH FROM o.orderDate) IN (7, 8, 9)")
         elif quarter == "Q4":
-            filters.append("EXTRACT(MONTH FROM o.OrderDate) IN (10, 11, 12)")
+            filters.append("EXTRACT(MONTH FROM o.orderDate) IN (10, 11, 12)")
 
     if month is not None:
         year_from_month = 2020 + (month - 1) // 12  # Calculate year based on month slider value
         month_in_year = (month - 1) % 12 + 1  # Calculate actual month within the year
-        filters.append("EXTRACT(YEAR FROM o.OrderDate) = :year_from_month")
-        filters.append("EXTRACT(MONTH FROM o.OrderDate) = :month_in_year")
+        filters.append("EXTRACT(YEAR FROM o.orderDate) = :year_from_month")
+        filters.append("EXTRACT(MONTH FROM o.orderDate) = :month_in_year")
         params["year_from_month"] = year_from_month
         params["month_in_year"] = month_in_year
+
+    if category:
+        filters.append("p.Category = :category")
+        params["category"] = category
 
     if filters:
         base_query += " WHERE " + " AND ".join(filters)
