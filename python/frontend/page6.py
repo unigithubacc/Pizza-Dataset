@@ -290,62 +290,68 @@ def main():
             # Farbpalette definieren
             color_palette = ['#f781bf', '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628']
             default_color = 'lightskyblue'
-    
-            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
 
-            selected_points = plotly_events(fig, click_event=True)
-            logging.debug(f"Selected points: {selected_points}")
-            
-            if selected_points:
-                # Store ID aus den ausgewählten Punkten extrahieren
-                new_store_id = selected_points[0]['x']
-                if new_store_id in st.session_state.selected_store_ids:
-                    index = st.session_state.selected_store_ids.index(new_store_id)
-                    st.session_state.selected_store_ids.pop(index)
-                    st.session_state.selected_store_colors.pop(index)
-                    st.rerun()
-                else:
-                    st.session_state.selected_store_ids.append(new_store_id)
-                    st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
-                    st.rerun()
+            with st.container(height=400, border=True):           
+                fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
 
-            # Aktualisiere das Balkendiagramm mit neuen Farben
-            fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
-            logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
+                selected_points = plotly_events(fig, click_event=True)
+                logging.debug(f"Selected points: {selected_points}")
+                
+                if selected_points:
+                    # Store ID aus den ausgewählten Punkten extrahieren
+                    new_store_id = selected_points[0]['x']
+                    if new_store_id in st.session_state.selected_store_ids:
+                        index = st.session_state.selected_store_ids.index(new_store_id)
+                        st.session_state.selected_store_ids.pop(index)
+                        st.session_state.selected_store_colors.pop(index)
+                        st.rerun()
+                    else:
+                        st.session_state.selected_store_ids.append(new_store_id)
+                        st.session_state.selected_store_colors.append(color_palette[len(st.session_state.selected_store_ids) % len(color_palette)])
+                        st.rerun()
 
-            customers_count_data = fetch_customers_count(start_date, end_date)
-            customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
-            selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
-            if selected_points:
-                print(selected_points)
-                point_index = selected_points[0]['pointNumber'] 
-                store_id = customers_pie_fig.data[0].customdata[point_index] 
-                url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"
-                webbrowser.open_new_tab(url)
+                # Aktualisiere das Balkendiagramm mit neuen Farben
+                fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
+                logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
+
+            with st.container(height=380, border=True):   
+                customers_count_data = fetch_customers_count(start_date, end_date)
+                customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
+                selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
+                if selected_points:
+                    print(selected_points)
+                    point_index = selected_points[0]['pointNumber'] 
+                    store_id = customers_pie_fig.data[0].customdata[point_index] 
+                    url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"
+                    webbrowser.open_new_tab(url)
 
     with col2:
         if st.session_state.selected_store_ids:
             chart_type = st.sidebar.radio("Select Chart Type", ("Revenue", "Total Sales"))
 
             if chart_type == "Revenue":
-                revenue_data = fetch_revenue_data(period, end_date)
-                prepared_revenue_data = prepare_data_for_chart(revenue_data, st.session_state.selected_store_ids, period)
-                revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-                st.plotly_chart(revenue_fig, use_container_width=False)
+                with st.container(height=400, border=True):   
+                    revenue_data = fetch_revenue_data(period, end_date)
+                    prepared_revenue_data = prepare_data_for_chart(revenue_data, st.session_state.selected_store_ids, period)
+                    revenue_fig = create_revenue_line_chart(prepared_revenue_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
+                    st.plotly_chart(revenue_fig, use_container_width=False)
                 
             elif chart_type == "Total Sales":
-                sales_data = fetch_sales_data(period, end_date)
-                prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
-                sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
-                st.plotly_chart(sales_fig, use_container_width=False)         
+                with st.container(height=400, border=True):                   
+                    sales_data = fetch_sales_data(period, end_date)
+                    prepared_sales_data = prepare_data_for_chart(sales_data, st.session_state.selected_store_ids, period)
+                    sales_fig = create_sales_line_chart(prepared_sales_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors, period)
+                    st.plotly_chart(sales_fig, use_container_width=False)         
 
         else:
-            empty_fig = create_empty_line_chart()
-            st.plotly_chart(empty_fig, use_container_width=False)
-            st.sidebar.warning("Select store IDs to see the number of sales for those stores")
+            with st.container(height=400, border=True):  
+                empty_fig = create_empty_line_chart()
+                st.plotly_chart(empty_fig, use_container_width=False)
+                st.sidebar.warning("Select store IDs to see the number of sales for those stores")
 
         if not top_selling_stores:
             st.error("No top selling stores data available.")
 
-        store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
-        folium_static(store_map, width=700, height=350)
+        with st.container(height=380, border=True):           
+            store_map = create_store_map(st.session_state.selected_store_ids, st.session_state.selected_store_colors, width='100%', height=500)
+            folium_static(store_map, width=700, height=310)
