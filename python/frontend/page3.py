@@ -93,9 +93,7 @@ def create_geo_chart(customer_data, store_data):
     # Add marker cluster for customers
     customer_cluster = MarkerCluster(name="Customers").add_to(m)
 
-    # Add heatmap for customers
-    heat_data = [[item['latitude'], item['longitude']] for item in customer_data]
-    HeatMap(heat_data).add_to(m)
+ 
 
     # Add customer markers
     for item in customer_data:
