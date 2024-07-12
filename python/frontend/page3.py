@@ -93,10 +93,6 @@ def create_geo_chart(customer_data, store_data):
     # Add marker cluster for customers
     customer_cluster = MarkerCluster(name="Customers").add_to(m)
 
-    # Add heatmap for customers
-    heat_data = [[item['latitude'], item['longitude']] for item in customer_data]
-    HeatMap(heat_data).add_to(m)
-
     # Add customer markers
     for item in customer_data:
         folium.Marker(
@@ -122,7 +118,7 @@ def display_store_location_and_customers(selected_storeid, min_orders):
     if store_details:
         store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
         geo_map = create_geo_chart(customer_data, store_data)
-        st_folium(geo_map, width=1400, height=500)
+        st_folium(geo_map, width=1400, height=370)
     else:
         st.error("Unable to fetch store details")
 
