@@ -39,7 +39,8 @@ def fetch_customer_locations(storeid, min_orders):
         st.error("Error fetching customer locations")
         return []
 
-def generate_heatmap(data):
+@st.experimental_fragment
+def generate_heatmap(data, selected_storeid=None):
     if data:
         df = pd.DataFrame(data)
         bins = [0, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1500]
@@ -76,12 +77,25 @@ def generate_heatmap(data):
                         y=labels_reversed,
                         title='Returning Customer Heatmap',
                         color_continuous_scale="Viridis")
+        
+        fig.update_layout(height=430)
 
+        # Highlight the selected store
+        if selected_storeid is not None:
+            for i, store in enumerate(df['storeid'].unique()):
+                if store == selected_storeid:
+                    fig.add_shape(
+                        type="rect",
+                        x0=i - 0.5, y0=-0.5,
+                        x1=i + 0.5, y1=len(labels) - 0.5,
+                        line=dict(color="red", width=3),
+                    )
+                    break
         return fig
     else:
         return None
 
-def create_geo_chart(customer_data, store_data):
+def create_geo_chart(customer_data, store_data, selected_storeid=None):
     if customer_data:
         avg_lat = sum([item['latitude'] for item in customer_data]) / len(customer_data)
         avg_lon = sum([item['longitude'] for item in customer_data]) / len(customer_data)
@@ -93,8 +107,6 @@ def create_geo_chart(customer_data, store_data):
     # Add marker cluster for customers
     customer_cluster = MarkerCluster(name="Customers").add_to(m)
 
-
-
     # Add customer markers
     for item in customer_data:
         folium.Marker(
@@ -105,10 +117,11 @@ def create_geo_chart(customer_data, store_data):
     # Add store markers
     for store in store_data:
         store_popup = f"Store ID: {store.get('storeid', 'N/A')}<br>City: {store.get('city', 'N/A')}<br>State: {store.get('state', 'N/A')}"
+        icon_color = 'red' if store['storeid'] == selected_storeid else 'blue'
         folium.Marker(
             location=[store['latitude'], store['longitude']],
             popup=store_popup,
-            icon=folium.Icon(color='red', icon='home', prefix='fa')
+            icon=folium.Icon(color=icon_color, icon='store', prefix='fa')
         ).add_to(m)
 
     return m
@@ -119,32 +132,42 @@ def display_store_location_and_customers(selected_storeid, min_orders):
   
     if store_details:
         store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
-        geo_map = create_geo_chart(customer_data, store_data)
-        st_folium(geo_map, width=1400, height=370)
+        geo_map = create_geo_chart(customer_data, store_data, selected_storeid=selected_storeid)
+        st_folium(geo_map, width=1500, height=370)
     else:
         st.error("Unable to fetch store details")
 
 def main():
-    # Extract query parameters from the URL
-    query_params = st.query_params
-    store_id_from_url = query_params.get("storeid", None)
+    
+    col1, col2, col3 = st.columns([1, 20, 1])
+    
+    with col2:
+        # Extract query parameters from the URL
+        query_params = st.query_params
+        store_id_from_url = query_params.get("storeid", None)
 
-    min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=1, value=1)
-    data = fetch_data(min_order_count)
+        min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=1, value=1)
+        data = fetch_data(min_order_count)
+                    
+        if data:
+            with st.container():
+                # Ensure the selected_storeid is initialized in session state
+                if "selected_storeid" not in st.session_state:
+                    st.session_state.selected_storeid = store_id_from_url
                 
-    if data:
-        with st.container():
-            fig = generate_heatmap(data)
-            st.sidebar.info("Select a store from the heatmap to see store and customer locations.")
-            if fig:
-                selected_points = plotly_events(fig, click_event=True)
-                if selected_points:
-                    selected_storeid = selected_points[0]['x']
-                    st.query_params.update(storeid=selected_storeid)
-                    display_store_location_and_customers(selected_storeid, min_order_count)
-                elif store_id_from_url:
-                    display_store_location_and_customers(store_id_from_url, min_order_count)
-            else:
-                st.warning("No data to display for the selected criteria.")
-    else:
-        st.warning("No data available.")
+                fig = generate_heatmap(data, selected_storeid=st.session_state.selected_storeid)
+                st.sidebar.info("Select a store from the heatmap to see store and customer locations.")
+                if fig:
+                    selected_points = plotly_events(fig, click_event=True)
+                    if selected_points:
+                        selected_storeid = selected_points[0]['x']
+                        st.session_state.selected_storeid = selected_storeid
+                        st.query_params.update(storeid=selected_storeid)
+                        display_store_location_and_customers(selected_storeid, min_order_count)
+                        st.rerun()
+                    elif st.session_state.selected_storeid:
+                        display_store_location_and_customers(st.session_state.selected_storeid, min_order_count)
+                else:
+                    st.warning("No data to display for the selected criteria.")
+        else:
+            st.warning("No data available.")

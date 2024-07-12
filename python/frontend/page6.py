@@ -116,11 +116,10 @@ def create_store_bar_chart(data, selected_store_ids, selected_store_colors, defa
         ))
 
     fig.update_layout(barmode='group',
-                      title='Top Selling Stores',
                       xaxis_title='Store ID',
                       yaxis_title='Revenue in $' if sort_by_customers else 'Revenue in $',
                       clickmode='event',
-                      height=400)
+                      height=370)
 
     return fig
 
