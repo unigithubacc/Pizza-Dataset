@@ -11,7 +11,7 @@ def fetch_top_pizzas():
     else:
         st.error("Fehler beim Abrufen der Daten.")
         return []
-    
+
 def fetch_sales_distribution(year=None, quarter=None, month=None):
     try:
         url = 'http://localhost:8000/sales-distribution'
@@ -100,8 +100,7 @@ def create_line_chart(data):
     product_groups = defaultdict(list)
     
     for item in data:
-        key = f"{item['name']} ({item['size']})"
-        product_groups[key].append((item['month'], item['revenue']))
+        product_groups[item['name']].append((item['month'], item['revenue']))
     
     for product, values in product_groups.items():
         values.sort()
@@ -127,9 +126,14 @@ def convert_month_slider_value(month_slider_value):
 def main():
     pizzas_data = fetch_top_pizzas()
     if pizzas_data:
-        fig = create_stacked_barchart(pizzas_data)
-        st.plotly_chart(fig)
-        
+        bar_chart = create_stacked_barchart(pizzas_data)
+        st.plotly_chart(bar_chart)
+
+    revenue_data = fetch_revenue_over_time()
+    if revenue_data:
+        line_chart = create_line_chart(revenue_data)
+        st.plotly_chart(line_chart)
+
     filter_mode = st.sidebar.radio("Select filter mode", ["Year and Quarter", "Month"])
     
     if filter_mode == "Year and Quarter":
@@ -145,13 +149,8 @@ def main():
         sales_data = fetch_sales_distribution(month=selected_month)
     
     if sales_data:
-        fig = create_pie_chart(sales_data)
-        st.plotly_chart(fig)
-    
-    revenue_data = fetch_revenue_over_time()
-    if revenue_data:
-        fig = create_line_chart(revenue_data)
-        st.plotly_chart(fig)
+        pie_chart = create_pie_chart(sales_data)
+        st.plotly_chart(pie_chart)
 
 if __name__ == "__main__":
     main()

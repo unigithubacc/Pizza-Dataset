@@ -36,7 +36,6 @@ async def get_revenue_over_time(session: AsyncSession = Depends(get_session)):
     query = text("""
         SELECT 
             p.name,
-            p.size,
             DATE_TRUNC('month', o.orderDate) AS month,
             SUM(o.total) AS revenue
         FROM 
@@ -46,14 +45,14 @@ async def get_revenue_over_time(session: AsyncSession = Depends(get_session)):
         JOIN 
             orders o ON oi.orderid = o.orderid
         GROUP BY 
-            p.name, p.size, DATE_TRUNC('month', o.orderDate)
+            p.name, DATE_TRUNC('month', o.orderDate)
         ORDER BY 
             month;
     """)
     result = await session.execute(query)
     revenue_data = result.fetchall()
     return [
-        {"name": row[0], "size": row[1], "month": row[2], "revenue": row[3]}
+        {"name": row[0], "month": row[1], "revenue": row[2]}
         for row in revenue_data
     ]
 
