@@ -162,7 +162,7 @@ def display_store_location_and_customers(selected_storeid, min_orders):
     if store_details:
         store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
         geo_map = create_geo_chart(customer_data, store_data, selected_storeid=selected_storeid)
-        st_folium(geo_map, width=900, height=270)
+        st_folium(geo_map, width=900, height=320)
     else:
         st.error("Unable to fetch store details")
         
@@ -180,7 +180,9 @@ def display_line_chart(selected_storeid=None):
             # Anpassen der Achsenbeschriftungen
             fig.update_layout(
                 xaxis_title='Hour',  # X-Achse
-                yaxis_title='Average Sales per Hour'  # Y-Achse
+                yaxis_title='Average Sales per Hour',
+                width=800,  # Set the width of the chart
+                height=395  # Set the height of the chart
             )
             
             st.plotly_chart(fig)
@@ -189,7 +191,6 @@ def display_line_chart(selected_storeid=None):
 
 def display_bar_chart(selected_storeid=None):
     if selected_storeid:
-        st.write(f"Fetching data for store ID: {selected_storeid}")
         data = fetch_avg_orders_per_day(selected_storeid)
         if data:
             df = pd.DataFrame(data)
@@ -201,14 +202,15 @@ def display_bar_chart(selected_storeid=None):
             # Customize the layout
             fig.update_layout(
                 xaxis_title='Day of Week',
-                yaxis_title='Average Number of Orders'
+                yaxis_title='Average Number of Orders',
+                width=800,  # Set the width of the chart
+                height=395  # Set the height of the chart
             )
             
             st.plotly_chart(fig)
         else:
             st.write("No data available for average number of orders per day.")
-    else:
-        st.write("No store ID selected.")
+
 
 
 def main():
