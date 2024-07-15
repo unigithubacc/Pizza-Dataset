@@ -9,7 +9,6 @@ from streamlit_folium import folium_static
 from datetime import date
 import webbrowser
 
-logging.basicConfig(level=logging.DEBUG)
 
 @st.cache_data
 def fetch_store_locations():
@@ -294,7 +293,6 @@ def main():
                 fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
 
                 selected_points = plotly_events(fig, click_event=True)
-                logging.debug(f"Selected points: {selected_points}")
                 
                 if selected_points:
                     # Store ID aus den ausgewählten Punkten extrahieren
@@ -311,14 +309,12 @@ def main():
 
                 # Aktualisiere das Balkendiagramm mit neuen Farben
                 fig = create_store_bar_chart(top_selling_stores, st.session_state.selected_store_ids, st.session_state.selected_store_colors, default_color, sort_by_customers=sort_by_customers)
-                logging.debug(f"Updated colors: {st.session_state.selected_store_colors}")
 
             with st.container(height=380, border=True):   
                 customers_count_data = fetch_customers_count(start_date, end_date)
                 customers_pie_fig = create_customers_pie_chart(customers_count_data, st.session_state.selected_store_ids, st.session_state.selected_store_colors)
                 selected_points = plotly_events(customers_pie_fig, click_event=True)  # Hinzugefügt zum Erfassen von Klicks
                 if selected_points:
-                    print(selected_points)
                     point_index = selected_points[0]['pointNumber'] 
                     store_id = customers_pie_fig.data[0].customdata[point_index] 
                     url = f"http://localhost:8501/?page=Store%2FSingle&storeid={store_id}"

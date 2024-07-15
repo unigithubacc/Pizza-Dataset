@@ -7,7 +7,6 @@ from frontend.page6 import main as page6_main
 from frontend.page7 import main as page7_main
 from frontend.page8 import main as page8_main
 from frontend.page9 import main as page9_main
-from navigation import render_navbar, close_navbar
 
 st.set_page_config(page_title="Shop Analytics", page_icon=":material/local_pizza:", layout="wide")
 
@@ -135,5 +134,3 @@ else:
 # Ausgewählte Seite anzeigen
 page = PAGES[selection]
 page()
-
-close_navbar()
