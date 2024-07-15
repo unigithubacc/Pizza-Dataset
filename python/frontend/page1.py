@@ -9,7 +9,7 @@ def fetch_top_pizzas():
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Fehler beim Abrufen der Daten.")
+        st.error("Error fetching data.")
         return []
 
 def fetch_sales_distribution(year=None, quarter=None, month=None):
@@ -35,7 +35,25 @@ def fetch_revenue_over_time():
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Fehler beim Abrufen der Daten.")
+        st.error("Error fetching data.")
+        return []
+
+def fetch_revenue_by_size(year=None, quarter=None, month=None):
+    try:
+        url = 'http://localhost:8000/products/revenue-by-size'
+        params = {}
+        if year and year != "All":
+            params['year'] = year
+        if quarter and quarter != "All":
+            params['quarter'] = quarter
+        if month:
+            params['month'] = month
+        
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching data: {e}")
         return []
 
 def create_stacked_barchart(data):
@@ -116,6 +134,18 @@ def create_line_chart(data):
     
     return fig
 
+def create_size_pie_chart(data):
+    sizes = [item['size'] for item in data]
+    revenues = [item['revenue'] for item in data]
+
+    fig = go.Figure(data=[go.Pie(labels=sizes, values=revenues, hole=.3)])
+    fig.update_layout(title_text='Most Popular Size by Revenue',
+                      width=800,
+                      height=400
+                      )
+    
+    return fig
+
 def convert_month_slider_value(month_slider_value):
     base_year = 2020
     year = base_year + (month_slider_value - 1) // 12
@@ -141,16 +171,22 @@ def main():
         selected_quarter = st.sidebar.selectbox("Select quarter", ["All", "Q1", "Q2", "Q3", "Q4"], index=0)
         st.write(f"Fetching data for year: {selected_year} and quarter: {selected_quarter}")
         sales_data = fetch_sales_distribution(year=selected_year, quarter=selected_quarter)
+        size_data = fetch_revenue_by_size(year=selected_year, quarter=selected_quarter)
     
     else:
         selected_month = st.sidebar.slider("Select month (1 = Jan 2020, 36 = Dec 2022)", min_value=1, max_value=36, value=1)
         readable_month, year, month = convert_month_slider_value(selected_month)
         st.write(f"Fetching data for {readable_month}")
         sales_data = fetch_sales_distribution(month=selected_month)
+        size_data = fetch_revenue_by_size(month=selected_month)
     
     if sales_data:
         pie_chart = create_pie_chart(sales_data)
         st.plotly_chart(pie_chart)
+
+    if size_data:
+        size_pie_chart = create_size_pie_chart(size_data)
+        st.plotly_chart(size_pie_chart)
 
 if __name__ == "__main__":
     main()
