@@ -174,21 +174,28 @@ def display_line_chart(selected_storeid=None):
             df = pd.DataFrame(data)
             df['hour'] = pd.to_datetime(df['hour'], unit='h').dt.hour
             
-            # Erstellen des Liniendiagramms mit Plotly Express
-            fig = px.line(df, x='hour', y='avg_sales_per_hour', title='Average sales per hour')
+            # Vervollständigen der Daten für fehlende Stunden
+            all_hours = list(range(24))
+            df = df.set_index('hour').reindex(all_hours, fill_value=0).reset_index()
             
-            # Anpassen der Achsenbeschriftungen
+            # Erstellen des Liniendiagramms mit Plotly Express
+            fig = px.line(df, x='hour', y='avg_sales_per_hour', title='Average Sales per Hour')
+            
+            # Anpassen der Achsenbeschriftungen und der sichtbaren x-Werte
             fig.update_layout(
-                xaxis_title='Hour',  # X-Achse
+                xaxis_title='Time in hour',  # X-Achse
                 yaxis_title='Average Sales per Hour',
-                width=800,  # Set the width of the chart
-                height=395  # Set the height of the chart
+                width=800,  # Setzen der Breite des Diagramms
+                height=395,  # Setzen der Höhe des Diagramms
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[hour for hour in all_hours if df.loc[df['hour'] == hour, 'avg_sales_per_hour'].sum() > 0]
+                )
             )
             
             st.plotly_chart(fig)
         else:
             st.write("Keine Daten verfügbar.")
-
 def display_bar_chart(selected_storeid=None):
     if selected_storeid:
         data = fetch_avg_orders_per_day(selected_storeid)
@@ -255,3 +262,4 @@ def main():
         if "selected_storeid" in st.session_state:
             display_line_chart(st.session_state.selected_storeid)
             display_bar_chart(st.session_state.selected_storeid)
+            
