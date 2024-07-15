@@ -17,7 +17,6 @@ from sqlalchemy import select
 from pydantic import BaseModel
 
 
-
 DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -33,6 +32,10 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 router = APIRouter()
+
+class AvgSalesPerHour(BaseModel):
+    hour: int
+    avg_sales_per_hour: float
 
 # Costumer Distribution by Location
 @router.get("/customer-locations")
@@ -105,6 +108,30 @@ async def get_store_locations(session: AsyncSession = Depends(get_session)):
         logging.error(f"Error fetching store locations: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@router.get("/sales/average_per_hour/", response_model=List[AvgSalesPerHour])
+async def get_avg_sales_per_hour(
+    storeid: str,
+    session: AsyncSession = Depends(get_session)
+):
+    query = text("""
+        SELECT
+            EXTRACT(HOUR FROM orderdate AT TIME ZONE 'UTC' AT TIME ZONE 'GMT-7') AS hour,
+            COUNT(*) / COUNT(DISTINCT orderdate::DATE) AS avg_sales_per_hour
+        FROM orders
+        WHERE storeid = :storeid
+        GROUP BY hour
+        ORDER BY hour
+    """)
+    result = await session.execute(query, {"storeid": storeid})
+    rows = result.fetchall()
+
+    return [
+        {
+            "hour": row[0],  # Access by index
+            "avg_sales_per_hour": row[1]  # Access by index
+        }
+        for row in rows
+    ]
 
 @router.get('/customers')
 def read_root():

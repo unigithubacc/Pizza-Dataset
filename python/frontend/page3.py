@@ -39,6 +39,16 @@ def fetch_customer_locations(storeid, min_orders):
         st.error("Error fetching customer locations")
         return []
 
+@st.cache_data
+def fetch_average_per_hour(storeid):
+    url = f"http://localhost:8000/sales/average_per_hour/?storeid={storeid}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Error fetching store details")
+        return None
+
 @st.experimental_fragment
 def generate_heatmap(data, selected_storeid=None):
     if data:
@@ -133,13 +143,36 @@ def display_store_location_and_customers(selected_storeid, min_orders):
     if store_details:
         store_data = [store_details]  # Put the store details in a list to use with the create_geo_chart function
         geo_map = create_geo_chart(customer_data, store_data, selected_storeid=selected_storeid)
-        st_folium(geo_map, width=1500, height=370)
+        st_folium(geo_map, width=900, height=270)
     else:
         st.error("Unable to fetch store details")
+        
+def display_line_chart(selected_storeid=None):
+    if selected_storeid:
+        data = fetch_average_per_hour(selected_storeid)
+        if data:
+            # Erstellen eines DataFrames aus den API-Daten
+            df = pd.DataFrame(data)
+            df['hour'] = pd.to_datetime(df['hour'], unit='h').dt.hour
+            
+            # Erstellen des Liniendiagramms mit Plotly Graph Objects
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=df['hour'], y=df['avg_sales_per_hour'], mode='lines', name='Average sales per hour'))
+            
+            # Anpassen der Layouteigenschaften
+            fig.update_layout(
+                title='Average Sales per Hour',
+                xaxis_title='Hour',
+                yaxis_title='Average Sales per Hour'
+            )
+            
+            st.plotly_chart(fig)
+        else:
+            st.write("Keine Daten verfügbar.")
 
 def main():
     
-    col1, col2, col3 = st.columns([1, 20, 1])
+    col1, col2, col3 = st.columns([1, 20, 8])
     
     with col2:
         # Extract query parameters from the URL
@@ -148,15 +181,17 @@ def main():
 
         min_order_count = st.sidebar.number_input("Minimum number of repeat orders:", min_value=1, value=1)
         data = fetch_data(min_order_count)
+        
                     
         if data:
             with st.container():
-                # Ensure the selected_storeid is initialized in session state
+                    # Ensure the selected_storeid is initialized in session state
                 if "selected_storeid" not in st.session_state:
                     st.session_state.selected_storeid = store_id_from_url
-                
+                    
                 fig = generate_heatmap(data, selected_storeid=st.session_state.selected_storeid)
                 st.sidebar.info("Select a store from the heatmap to see store and customer locations.")
+                
                 if fig:
                     selected_points = plotly_events(fig, click_event=True)
                     if selected_points:
@@ -171,3 +206,8 @@ def main():
                     st.warning("No data to display for the selected criteria.")
         else:
             st.warning("No data available.")
+
+
+    with col3:
+        if "selected_storeid" in st.session_state:
+            display_line_chart(st.session_state.selected_storeid)

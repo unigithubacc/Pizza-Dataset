@@ -130,7 +130,7 @@ def create_pizza_ranking_chart(data):
     
     # Layout adjustments
     fig.update_layout(
-        title='Ranking of pizzas by Revenue',
+        title='Ranking of pizzas by Total Sales',
         yaxis=dict(title='Rank', side='left', autorange='reversed'),
         xaxis={'tickangle': -45},
         width=1200,

@@ -24,6 +24,15 @@ def fetch_store_locations():
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching store data: {e}")
         return []
+    
+def fetch_store_locations():
+    try:
+        response = requests.get('http://localhost:8000/sales/average_per_hour/')  
+        response.raise_for_status()  
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching store data: {e}")
+        return []    
 
 def create_geo_chart(customer_data, store_data):
     if customer_data:
@@ -61,27 +70,34 @@ def create_geo_chart(customer_data, store_data):
     return m
 
 def main():
-    st.title("Customer and Store Distribution by Location")
+        # Define columns for layout
+    col1, col2 = st.columns([1, 1])  # Adjust column ratios as needed
 
-    # Initialize session state for storing fetched data
-    if 'customer_data' not in st.session_state:
-        st.session_state.customer_data = fetch_customer_info()
-    if 'store_data' not in st.session_state:
-        st.session_state.store_data = fetch_store_locations()
+    # Column 1: Logo
+    with col1:
+        st.title("Customer and Store Distribution by Location")
 
-        # Input for minimum number of orders
-    min_orders_input = st.text_input("Enter minimum number of orders (integer):")
-    try:
-        min_orders = int(min_orders_input)
-    except ValueError:
-        min_orders = 0
+        # Initialize session state for storing fetched data
+        if 'customer_data' not in st.session_state:
+            st.session_state.customer_data = fetch_customer_info()
+        if 'store_data' not in st.session_state:
+            st.session_state.store_data = fetch_store_locations()
 
-    # Fetch filtered customer data based on user input
-    if min_orders > 0:
-        st.session_state.customer_data = fetch_customer_info(min_orders)
-    else:
-        st.session_state.customer_data = fetch_customer_info()
+            # Input for minimum number of orders
+        min_orders_input = st.text_input("Enter minimum number of orders (integer):")
+        try:
+            min_orders = int(min_orders_input)
+        except ValueError:
+            min_orders = 0
 
+        # Fetch filtered customer data based on user input
+        if min_orders > 0:
+            st.session_state.customer_data = fetch_customer_info(min_orders)
+        else:
+            st.session_state.customer_data = fetch_customer_info()
+    with col2:
+        st.title("123456")
+        
     # Create and display the map
     geo_chart = create_geo_chart(st.session_state.customer_data, st.session_state.store_data)
     folium_static(geo_chart)
