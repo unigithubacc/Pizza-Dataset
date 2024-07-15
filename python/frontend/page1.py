@@ -149,7 +149,7 @@ def create_size_pie_chart(data):
 def convert_month_slider_value(month_slider_value):
     base_year = 2020
     year = base_year + (month_slider_value - 1) // 12
-    month = (month - 1) % 12 + 1
+    month = (month_slider_value - 1) % 12 + 1
     month_name = datetime(year, month, 1).strftime('%b')
     return f"{month_name}. {year}", year, month
 
