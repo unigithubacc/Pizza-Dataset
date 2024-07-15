@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, bindparam
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Optional
 from typing import AsyncGenerator
@@ -30,6 +30,11 @@ router = APIRouter()
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
+        
+class YearQuarterParams(BaseModel):
+    year: Optional[int] = Query(None, gt=2000, lt=9999)
+    quarter: Optional[int] = Query(None, gt=0, lt=5)
+        
 
 @router.get("/dashboard-overview")
 async def get_dashboard_overview(session: AsyncSession = Depends(get_session)):
@@ -58,6 +63,61 @@ async def get_dashboard_overview(session: AsyncSession = Depends(get_session)):
         results[key] = result.scalar()
 
     return results
+
+
+@router.get("/revenue-ranking/")
+async def get_revenue_ranking(session: AsyncSession = Depends(get_session)):
+
+    query = text("""
+    WITH revenue_per_store AS (
+        SELECT 
+            storeid,
+            EXTRACT(YEAR FROM orderdate) AS year,
+            EXTRACT(QUARTER FROM orderdate) AS quarter,
+            SUM(total) AS total_revenue
+        FROM 
+            orders
+        GROUP BY 
+            storeid,
+            EXTRACT(YEAR FROM orderdate),
+            EXTRACT(QUARTER FROM orderdate)
+    ),
+    store_ranking AS (
+        SELECT 
+            storeid,
+            year,
+            quarter,
+            total_revenue,
+            RANK() OVER (PARTITION BY year, quarter ORDER BY total_revenue DESC) AS rank
+        FROM 
+            revenue_per_store
+    )
+    SELECT 
+        year,
+        CONCAT('Q', quarter) AS quarter,
+        storeid,
+        total_revenue,
+        rank
+    FROM 
+        store_ranking
+    ORDER BY 
+        year,
+        quarter,
+        rank
+    """)
+
+
+    result = await session.execute(query)
+    rankings = result.fetchall()
+
+    if not rankings:
+        raise HTTPException(status_code=404, detail="No data found.")
+
+    return [
+        dict(year=row[0], quarter=row[1], storeid=row[2], total_revenue=row[3], rank=row[4])
+        for row in rankings
+    ]
+
 
 @router.get('/dashboard')
 def read_root():
