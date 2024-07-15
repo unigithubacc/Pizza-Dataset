@@ -118,6 +118,60 @@ async def get_revenue_ranking(session: AsyncSession = Depends(get_session)):
         for row in rankings
     ]
 
+@router.get("/pizzerankings/")
+async def get_pizza_rankings(session: AsyncSession = Depends(get_session)):
+    query = text("""
+    WITH pizza_sales AS (
+        SELECT 
+            products.name,
+            EXTRACT(YEAR FROM orders.orderdate) AS year,
+            EXTRACT(QUARTER FROM orders.orderdate) AS quarter,
+            COUNT(order_items.orderid) AS number_of_sales
+        FROM 
+            order_items
+        JOIN 
+            products ON order_items.sku = products.sku
+        JOIN
+            orders ON order_items.orderid = orders.orderid
+        GROUP BY 
+            products.name, 
+            EXTRACT(YEAR FROM orders.orderdate),
+            EXTRACT(QUARTER FROM orders.orderdate)
+    ),
+    pizza_ranking AS (
+        SELECT 
+            name,
+            year,
+            quarter,
+            number_of_sales,
+            RANK() OVER (PARTITION BY year, quarter ORDER BY number_of_sales DESC) AS rank
+        FROM 
+            pizza_sales
+    )
+    SELECT 
+        name,
+        year,
+        quarter,
+        number_of_sales,
+        rank
+    FROM 
+        pizza_ranking
+    ORDER BY 
+        year,
+        quarter,
+        rank;
+    """)
+    
+    result = await session.execute(query)
+    rankings = result.fetchall()
+
+    if not rankings:
+        raise HTTPException(status_code=404, detail="Keine Daten gefunden.")
+
+    return [
+        {"name": row[0], "year": row[1], "quarter": row[2], "number_of_sales": row[3], "rank": row[4]}
+        for row in rankings
+    ]
 
 @router.get('/dashboard')
 def read_root():
