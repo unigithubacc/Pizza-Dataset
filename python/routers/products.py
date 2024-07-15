@@ -16,8 +16,6 @@ from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional
 
-
-
 DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -32,6 +30,32 @@ router = APIRouter()
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
+
+@router.get("/products/revenue-over-time")
+async def get_revenue_over_time(session: AsyncSession = Depends(get_session)):
+    query = text("""
+        SELECT 
+            p.name,
+            p.size,
+            DATE_TRUNC('month', o.orderDate) AS month,
+            SUM(o.total) AS revenue
+        FROM 
+            products p
+        JOIN 
+            order_items oi ON p.sku = oi.sku
+        JOIN 
+            orders o ON oi.orderid = o.orderid
+        GROUP BY 
+            p.name, p.size, DATE_TRUNC('month', o.orderDate)
+        ORDER BY 
+            month;
+    """)
+    result = await session.execute(query)
+    revenue_data = result.fetchall()
+    return [
+        {"name": row[0], "size": row[1], "month": row[2], "revenue": row[3]}
+        for row in revenue_data
+    ]
 
 @router.get("/products/top-selling-products")
 async def get_top_selling_products(session: AsyncSession = Depends(get_session)):
