@@ -149,21 +149,13 @@ def create_size_pie_chart(data):
 def convert_month_slider_value(month_slider_value):
     base_year = 2020
     year = base_year + (month_slider_value - 1) // 12
-    month = (month_slider_value - 1) % 12 + 1
+    month = (month - 1) % 12 + 1
     month_name = datetime(year, month, 1).strftime('%b')
     return f"{month_name}. {year}", year, month
 
 def main():
-    pizzas_data = fetch_top_pizzas()
-    if pizzas_data:
-        bar_chart = create_stacked_barchart(pizzas_data)
-        st.plotly_chart(bar_chart)
-
-    revenue_data = fetch_revenue_over_time()
-    if revenue_data:
-        line_chart = create_line_chart(revenue_data)
-        st.plotly_chart(line_chart)
-
+    st.sidebar.title("Filters")
+    
     filter_mode = st.sidebar.radio("Select filter mode", ["Year and Quarter", "Month"])
     
     if filter_mode == "Year and Quarter":
@@ -179,14 +171,26 @@ def main():
         st.write(f"Fetching data for {readable_month}")
         sales_data = fetch_sales_distribution(month=selected_month)
         size_data = fetch_revenue_by_size(month=selected_month)
-    
-    if sales_data:
-        pie_chart = create_pie_chart(sales_data)
-        st.plotly_chart(pie_chart)
 
-    if size_data:
-        size_pie_chart = create_size_pie_chart(size_data)
-        st.plotly_chart(size_pie_chart)
+    pizzas_data = fetch_top_pizzas()
+    revenue_data = fetch_revenue_over_time()
+
+    if pizzas_data and sales_data and revenue_data and size_data:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            bar_chart = create_stacked_barchart(pizzas_data)
+            st.plotly_chart(bar_chart)
+
+            pie_chart = create_pie_chart(sales_data)
+            st.plotly_chart(pie_chart)
+
+        with col2:
+            line_chart = create_line_chart(revenue_data)
+            st.plotly_chart(line_chart)
+
+            size_pie_chart = create_size_pie_chart(size_data)
+            st.plotly_chart(size_pie_chart)
 
 if __name__ == "__main__":
     main()
