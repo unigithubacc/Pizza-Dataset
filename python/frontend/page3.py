@@ -155,20 +155,19 @@ def display_line_chart(selected_storeid=None):
             df = pd.DataFrame(data)
             df['hour'] = pd.to_datetime(df['hour'], unit='h').dt.hour
             
-            # Erstellen des Liniendiagramms mit Plotly Graph Objects
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=df['hour'], y=df['avg_sales_per_hour'], mode='lines', name='Average sales per hour'))
+            # Erstellen des Liniendiagramms mit Plotly Express
+            fig = px.line(df, x='hour', y='avg_sales_per_hour', title='Average sales per hour')
             
-            # Anpassen der Layouteigenschaften
+            # Anpassen der Achsenbeschriftungen
             fig.update_layout(
-                title='Average Sales per Hour',
-                xaxis_title='Hour',
-                yaxis_title='Average Sales per Hour'
+                xaxis_title='Hour',  # X-Achse
+                yaxis_title='Average Sales per Hour'  # Y-Achse
             )
             
             st.plotly_chart(fig)
         else:
             st.write("Keine Daten verfügbar.")
+
 
 def main():
     
