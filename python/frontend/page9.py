@@ -69,7 +69,7 @@ def create_revenue_ranking_chart(data):
                                  name=f'Store {storeid}'))
 
     # Layout Anpassungen
-    fig.update_layout(title='Ranking der Stores nach Umsatz',
+    fig.update_layout(title='Ranking of stores by Revenue',
                       xaxis=dict(tickangle=-45, tickmode='linear', dtick=1),
                       yaxis=dict(title='Rank', side='left', autorange='reversed'),
                       yaxis2=dict(title='Rank', overlaying='y', side='right',
