@@ -8,6 +8,9 @@ from streamlit_plotly_events import plotly_events
 import folium
 from folium.plugins import HeatMap, MarkerCluster
 from streamlit_folium import st_folium
+import pandas as pd
+import plotly.express as px
+import requests
 
 @st.cache_data
 def fetch_data(min_order_count):
@@ -47,6 +50,21 @@ def fetch_average_per_hour(storeid):
         return response.json()
     else:
         st.error("Error fetching store details")
+        return None
+    
+@st.cache_data
+def fetch_avg_orders_per_day(storeid):
+    url = f"http://localhost:8000/sales/avg_orders_per_day/?storeid={storeid}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        st.error(f"Error fetching average orders per day: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            st.error(f"Response content: {e.response.text}")
+        else:
+            st.error("No response content available")
         return None
 
 @st.experimental_fragment
@@ -116,6 +134,7 @@ def create_geo_chart(customer_data, store_data, selected_storeid=None):
 
     # Add marker cluster for customers
     customer_cluster = MarkerCluster(name="Customers").add_to(m)
+    
 
     # Add customer markers
     for item in customer_data:
@@ -168,6 +187,29 @@ def display_line_chart(selected_storeid=None):
         else:
             st.write("Keine Daten verfügbar.")
 
+def display_bar_chart(selected_storeid=None):
+    if selected_storeid:
+        st.write(f"Fetching data for store ID: {selected_storeid}")
+        data = fetch_avg_orders_per_day(selected_storeid)
+        if data:
+            df = pd.DataFrame(data)
+            
+            # Create the bar chart with Plotly Express
+            fig = px.bar(df, x='day_of_week', y='avg_orders', 
+                         title='Average Number of Orders per Day of Week')
+            
+            # Customize the layout
+            fig.update_layout(
+                xaxis_title='Day of Week',
+                yaxis_title='Average Number of Orders'
+            )
+            
+            st.plotly_chart(fig)
+        else:
+            st.write("No data available for average number of orders per day.")
+    else:
+        st.write("No store ID selected.")
+
 
 def main():
     
@@ -210,3 +252,4 @@ def main():
     with col3:
         if "selected_storeid" in st.session_state:
             display_line_chart(st.session_state.selected_storeid)
+            display_bar_chart(st.session_state.selected_storeid)

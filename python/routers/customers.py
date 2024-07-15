@@ -15,6 +15,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from sqlalchemy import select
 from pydantic import BaseModel
+from typing import List
+from fastapi import HTTPException
+from typing import List
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from pydantic import BaseModel
+import logging
+from fastapi import APIRouter, HTTPException, Query, Depends
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from typing import List, Optional, AsyncGenerator
+from sqlalchemy import text
+from pydantic import BaseModel
+
+
 
 
 DATABASE_URL = "postgresql+asyncpg://postgres:ProLab895+@localhost:5432/pizza"
@@ -30,14 +47,17 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
-
 router = APIRouter()
 
 class AvgSalesPerHour(BaseModel):
     hour: int
     avg_sales_per_hour: float
 
-# Costumer Distribution by Location
+class AvgOrdersPerDay(BaseModel):
+    day_of_week: str
+    avg_orders: float
+
+# Customer Distribution by Location
 @router.get("/customer-locations")
 async def get_customer_locations(min_orders: int = Query(1, description="Minimum number of orders"), session: AsyncSession = Depends(get_session)):
     query = text("""
@@ -77,8 +97,7 @@ async def get_customer_locations(storeid: str, min_orders: int = Query(1, descri
     customer_locations = result.fetchall()
     return [{"latitude": loc[0], "longitude": loc[1]} for loc in customer_locations]
 
-
-    # Store Locations
+# Store Locations
 @router.get("/store-locations")
 async def get_store_locations(session: AsyncSession = Depends(get_session)):
     query = text("""
@@ -109,10 +128,7 @@ async def get_store_locations(session: AsyncSession = Depends(get_session)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.get("/sales/average_per_hour/", response_model=List[AvgSalesPerHour])
-async def get_avg_sales_per_hour(
-    storeid: str,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_avg_sales_per_hour(storeid: str, session: AsyncSession = Depends(get_session)):
     query = text("""
         SELECT
             EXTRACT(HOUR FROM orderdate AT TIME ZONE 'UTC' AT TIME ZONE 'GMT-7') AS hour,
@@ -124,7 +140,6 @@ async def get_avg_sales_per_hour(
     """)
     result = await session.execute(query, {"storeid": storeid})
     rows = result.fetchall()
-
     return [
         {
             "hour": row[0],  # Access by index
@@ -132,6 +147,43 @@ async def get_avg_sales_per_hour(
         }
         for row in rows
     ]
+
+@router.get("/sales/avg_orders_per_day/", response_model=List[AvgOrdersPerDay])
+async def get_avg_orders_per_day(storeid: str, session: AsyncSession = Depends(get_session)):
+    try:
+        query = text("""
+            SELECT 
+                TO_CHAR(orderDate, 'Day') AS DayOfWeek,
+                COUNT(orderID)::float / COUNT(DISTINCT DATE(orderDate)) AS AvgOrders
+            FROM orders
+            WHERE storeID = :storeid
+            GROUP BY DayOfWeek
+            ORDER BY CASE
+                WHEN TO_CHAR(orderDate, 'Day') = 'Sunday   ' THEN 1
+                WHEN TO_CHAR(orderDate, 'Day') = 'Monday   ' THEN 2
+                WHEN TO_CHAR(orderDate, 'Day') = 'Tuesday  ' THEN 3
+                WHEN TO_CHAR(orderDate, 'Day') = 'Wednesday' THEN 4
+                WHEN TO_CHAR(orderDate, 'Day') = 'Thursday ' THEN 5
+                WHEN TO_CHAR(orderDate, 'Day') = 'Friday   ' THEN 6
+                WHEN TO_CHAR(orderDate, 'Day') = 'Saturday ' THEN 7
+            END
+        """)
+        result = await session.execute(query, {"storeid": storeid})
+        rows = result.fetchall()
+
+        if not rows:
+            raise HTTPException(status_code=404, detail="No data found for the given store ID")
+
+        return [
+            {
+                "day_of_week": row[0].strip(),
+                "avg_orders": float(row[1])
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        error_msg = f"An error occurred: {str(e)}"
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @router.get('/customers')
 def read_root():
