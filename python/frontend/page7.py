@@ -93,7 +93,7 @@ def create_store_bar_chart2(data):
         ))
 
     fig2.update_layout(barmode='group',
-                      title='Top Selling Stores',
+                      title='Revenue for all Stores',
                       xaxis_title='Store ID',
                       yaxis_title='Total Revenue in $',
                       clickmode='event+select',

@@ -4,6 +4,7 @@ import requests
 from collections import defaultdict
 from datetime import datetime
 
+@st.cache_data
 def fetch_top_pizzas():
     response = requests.get('http://localhost:8000/products/top-selling-products')
     if response.status_code == 200:
@@ -12,6 +13,7 @@ def fetch_top_pizzas():
         st.error("Error fetching data.")
         return []
 
+@st.cache_data
 def fetch_sales_distribution(year=None, quarter=None, month=None):
     try:
         url = 'http://localhost:8000/sales-distribution'
@@ -30,6 +32,7 @@ def fetch_sales_distribution(year=None, quarter=None, month=None):
         st.error(f"Error fetching data: {e}")
         return []
 
+@st.cache_data
 def fetch_revenue_over_time():
     response = requests.get('http://localhost:8000/products/revenue-over-time')
     if response.status_code == 200:
@@ -38,6 +41,7 @@ def fetch_revenue_over_time():
         st.error("Error fetching data.")
         return []
 
+@st.cache_data
 def fetch_revenue_by_size(year=None, quarter=None, month=None):
     try:
         url = 'http://localhost:8000/products/revenue-by-size'
